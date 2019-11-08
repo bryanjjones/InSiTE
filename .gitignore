@@ -1,0 +1,13 @@
+AlignedIS.fasta
+./*.csv
+MAFFTfiles/
+genomes/
+htslib/
+bcftools/
+old/
+RAWfastq/
+/inprocess/*
+/results/*
+/RAWfastq/*
+/refrence_datasets/genomes/*
+/refrence_datasets/annotations/*

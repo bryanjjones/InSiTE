@@ -6,6 +6,87 @@ import os
 import sys
 import multiprocessing
 
+
+
+
+def featuretype_filter(feature, featuretype):
+    """
+    Only passes features with the specified *featuretype*
+    """
+    if feature[2] == featuretype:
+        return True
+    return False
+
+
+def subset_featuretypes(featuretype):
+    """
+    Returns the filename containing only `featuretype` features.
+    """
+    return g.filter(featuretype_filter, featuretype).saveas().fn
+
+
+def count_reads_in_features(features):
+    """
+    Callback function to count reads in features
+    """
+    return (
+        pybedtools.BedTool(bam)
+        .intersect(
+            features,
+            s=stranded,
+            bed=True,
+            stream=True,
+        )
+    ).count()
+def features (featuretypes, procs, gff, bam)
+    # Some GFF files have invalid entries -- like chromosomes with negative coords
+    # or features of length = 0.  This line removes them (the `remove_invalid`
+    # method) and saves the result in a tempfile
+    g = pybedtools.BedTool(gff).remove_invalid().saveas()
+    #g = g.sort
+
+    # Set up pool of workers
+    pool = multiprocessing.Pool(processes=procs)
+
+    # Get separate files for introns and exons in parallel
+
+    a, b = pool.map(subset_featuretypes, featuretypes)
+
+    # Since `subset_featuretypes` returns filenames, we convert to BedTool objects
+    # to do intersections below.
+    a = pybedtools.BedTool(a)
+    b = pybedtools.BedTool(b)
+
+    # Identify unique and shared regions using bedtools commands subtract, merge,
+    # and intersect.
+    a =a.sort()
+    b = b.sort()
+    a_only = a.subtract(b).merge()
+    b_only = b.subtract(a).merge()
+    a_and_b = (
+        a
+        .intersect(b)
+        .merge()
+    )
+    print(f'{len(pybedtools.BedTool(bam))} reads')
+    print(f'{len(g)} annotations')
+    print(f'{len(a)} {featuretypes[0]}')
+    print(f'{len(b)} {featuretypes[1]}')
+    print(f'{len(a_only)} {featuretypes[0]} onlys')
+    print(f'{len(b_only)} {featuretypes[1]} onlys')
+    print(f'{len(a_and_b)} {featuretypes[0]} and {featuretypes[1]}')
+
+    # Do intersections with BAM file in parallel. Note that we're passing filenames
+    # to multiprocessing.Pool rather than BedTool objects.
+    features = (a_only.fn, b_only.fn, a_and_b.fn)
+
+    # Run count_reads_in_features in parallel over features
+    results = pool.map(count_reads_in_features, features)
+
+    
+    return results, labels
+
+
 if __name__ == "__main__":
 
     ap = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
@@ -26,6 +107,8 @@ if __name__ == "__main__":
     gff = args.gff
     bam = args.bam
     stranded = args.stranded
+    procs = args.processes
+    featuretypes = ['intron', 'exon']
 
 
     if args.processes > 3:
@@ -34,85 +117,11 @@ if __name__ == "__main__":
             "resetting processes from {0} to 3".format(args.processes)
         )
         args.processes = 3
+    features (featuretypes, procs, gff, bam)
 
-
-    def featuretype_filter(feature, featuretype):
-        """
-        Only passes features with the specified *featuretype*
-        """
-        if feature[2] == featuretype:
-            return True
-        return False
-
-
-    def subset_featuretypes(featuretype):
-        """
-        Returns the filename containing only `featuretype` features.
-        """
-        return g.filter(featuretype_filter, featuretype).saveas().fn
-
-
-    def count_reads_in_features(features):
-        """
-        Callback function to count reads in features
-        """
-        return (
-            pybedtools.BedTool(bam)
-            .intersect(
-                features,
-                s=stranded,
-                bed=True,
-                stream=True,
-            )
-        ).count()
-
-    # Some GFF files have invalid entries -- like chromosomes with negative coords
-    # or features of length = 0.  This line removes them (the `remove_invalid`
-    # method) and saves the result in a tempfile
-    g = pybedtools.BedTool(gff).remove_invalid().saveas()
-    #g = g.sort
-
-    # Set up pool of workers
-    pool = multiprocessing.Pool(processes=args.processes)
-
-    # Get separate files for introns and exons in parallel
-    featuretypes = ['intron', 'exon']
-    introns, exons = pool.map(subset_featuretypes, featuretypes)
-
-    # Since `subset_featuretypes` returns filenames, we convert to BedTool objects
-    # to do intersections below.
-    introns = pybedtools.BedTool(introns)
-    exons = pybedtools.BedTool(exons)
-
-    # Identify unique and shared regions using bedtools commands subtract, merge,
-    # and intersect.
-    introns =introns.sort()
-    exons = exons.sort()
-    exon_only = exons.subtract(introns).merge()
-    intron_only = introns.subtract(exons).merge()
-    intron_and_exon = (
-        exons
-        .intersect(introns)
-        .merge()
-    )
-    print(f'{len(pybedtools.BedTool(bam))} reads')
-    print(f'{len(g)} annotations')
-    print(f'{len(introns)} introns')
-    print(f'{len(exons)} exons')
-    print(f'{len(intron_only)} introno onlys')
-    print(f'{len(exon_only)} exon onlys')
-    print(f'{len(intron_and_exon)} intron and exon')
-
-    # Do intersections with BAM file in parallel. Note that we're passing filenames
-    # to multiprocessing.Pool rather than BedTool objects.
-    features = (exon_only.fn, intron_only.fn, intron_and_exon.fn)
-
-    # Run count_reads_in_features in parallel over features
-    results = pool.map(count_reads_in_features, features)
-
-    labels = ('exon_only',
-              'intron_only',
-              'intron_and_exon')
+    labels = (f'{featuretypes[0]}_only',
+              f'{featuretypes[1]}_only',
+              f'{featuretypes[0]}_and_{featuretypes[1]}')
 
     for label, reads in zip(labels, results):
-        print('{0}\t{1}'.format(label, reads))
+    print('{0}\t{1}'.format(label, reads))

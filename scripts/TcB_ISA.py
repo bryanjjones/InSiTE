@@ -70,7 +70,7 @@ bowtieindex = './refrence_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405
 weblogolocation = 'weblogo' #in PATH
 twobitlocation = './scripts/TwoBitToFa'
 twobitgenomelocation='./refrence_datasets/genomes/GRCh38.2bit'
-annotations=['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcript.gtf','./refrence_datasets/annotations/gencode.v32.transcript.gtf'] #annotations file in gff, gtf, or bed format,
+annotations=['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcripts.gtf','./refrence_datasets/annotations/gencode.v32.transcripts.gtf'] #annotations file in gff, gtf, or bed format,
 
 #sanity checks:
 if inputtype=="sam":
@@ -178,7 +178,7 @@ if writeFASTA:#write FASTA formatted file with returned sequences
 if writelogo: #dependant on having sequences, optional to make logo plot
 	weblogocommand=f'{weblogolocation} -f {FASTAfile} -D fasta -o {logofile} -F svg -A dna -F png --resolution 600 -s large -c classic -i {str(int(1-1*lwindow))} -l -10 -u 10 '#-l [lower bound] -u [upper bound]
 	print(colorama.Style.RESET_ALL + f'Writing logo')
-	print(colorama.Fore.YELLOW + f'{weblogocommand}')
+	print(colorama.Fore.YELLOW + f'{weblogocommand}'+colorama.Style.RESET_ALL)
 	logocommand=runbin.Command(weblogocommand)
 	logoout=logocommand.run(timeout=1800) 
 '''
@@ -200,6 +200,7 @@ if getannotations:
 		output_writer = csv.writer(output_file, delimiter=",")
 		for i in range(len(featurenames)):
 			if featuredist[i]:
+				print(colorama.Style.RESET_ALL+f'mapping insertion site distances to '+colorama.Fore.YELLOW+f'{featurenames[i]}'+colorama.Style.RESET_ALL+f' in '+colorama.Fore.YELLOW+f'{annotations[i]}'+colorama.Style.RESET_ALL)
 				distances, average, standarddev, close, b = annotate.closest (ISbamfilename,annotations[i],featurename=featurenames[i],limit=distance,position="start")
 				output_writer.writerow([f'{featurenames[i]}(average distance)',average])
 				output_writer.writerow([f'{featurenames[i]}(standard deviation)',standarddev])
@@ -208,6 +209,7 @@ if getannotations:
 					dist_writer = csv.writer(distance_file, delimiter=",")
 					dist_writer.writerow(distances)
 			else:
+				print(colorama.Style.RESET_ALL+f'mapping insertion sites to'+colorama.Fore.YELLOW+f' {featurenames[i]}'+colorama.Style.RESET_ALL+f' in '+colorama.Fore.YELLOW+f'{annotations[i]}'+colorama.Style.RESET_ALL)
 				results = annotate.featuremap (annotations[i], ISbamfilename, featurenames=featurenames[i], single=True ,procs=3)
 				output_writer.writerow([f'reads mapped to {featurenames[i]}', results[0]])
 				if not totalprinted: #featuremap returns total reads, add this line only once as it should be the same for each feature.

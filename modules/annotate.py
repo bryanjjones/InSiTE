@@ -6,6 +6,7 @@ import os
 import sys
 import multiprocessing
 import statistics
+import colorama
 
 
 def featuretype_filter(feature, featuretype):
@@ -98,9 +99,9 @@ def closest(queryfilename, refrencefilename, featurename=['TSS'], position="star
     average=statistics.mean(distances)
     standarddev=statistics.stdev(distances)
     if not quiet:
-        print('average distance to {0}\t{1:,}'.format(featurename, round(average)))
-        print('standard deviation distance to {0}\t{1:,}'.format(featurename, round(standarddev)))
-        print('Sites within {0} bp of {1}\t{2:,}'.format(limit,featurename, len(closedistances)))
+        print(colorama.Style.RESET_ALL+f'average distance to '+colorama.Fore.YELLOW+f'{featurename}\t\t\t{round(average):,}\t'+colorama.Style.RESET_ALL+f'bp')
+        print(colorama.Style.RESET_ALL+f'standard deviation distance to '+colorama.Fore.YELLOW+f'{featurename}\t{round(standarddev):,}\t'+colorama.Style.RESET_ALL+f'bp')
+        print(colorama.Style.RESET_ALL+f'sites within '+colorama.Fore.YELLOW+f'{limit}'+colorama.Style.RESET_ALL+f' bp of '+colorama.Fore.YELLOW+f'{featurename}\t\t{len(closedistances):,}'+colorama.Style.RESET_ALL)
     return distances, average, standarddev, len(closedistances), b
 
 #main function to map features in IS bam file to feature file (gff/gtf/bed). if single=Falso, map to given featurenames list in feature file. if single=True, all features in feature file are treated as the target feature. If save=True, each subset of features is saved as new file.
@@ -110,7 +111,7 @@ def featuremap (gff, bam, featurenames=['intron', 'exon'],single=False,save=Fals
     if single:
         #single feature type in refrence gff/gtf/bed file
         results.append(count_reads_in_features(gff,bam,features=None))        
-        #featurenames=['mapped']
+        featurenames=[featurenames]
     else:
         #multipse feature types in refrence gff/gtf
         sets = featuresets(gff, featurenames,save=save)
@@ -122,7 +123,7 @@ def featuremap (gff, bam, featurenames=['intron', 'exon'],single=False,save=Fals
     featurenames.append('total')
     results.append(total)
     for label, reads in zip(featurenames, results):
-        print('{0}\t{1:,}'.format(label, reads))
+        print(colorama.Fore.YELLOW+f'{label}\t{reads:,}'+colorama.Style.RESET_ALL)
     return results
 #map bam reads to featuresets
 if __name__ == "__main__":

@@ -5,8 +5,7 @@ import argparse
 import os
 import sys
 import multiprocessing
-
-
+import statistics
 
 
 def featuretype_filter(feature, featuretype):
@@ -17,111 +16,144 @@ def featuretype_filter(feature, featuretype):
         return True
     return False
 
-
-def subset_featuretypes(featuretype):
+def subset_featuretypes(featuretype,g):
     """
     Returns the filename containing only `featuretype` features.
     """
     return g.filter(featuretype_filter, featuretype).saveas().fn
 
 
-def count_reads_in_features(features):
+def count_reads_in_features(featurefile,bam,features=None):
     """
     Callback function to count reads in features
     """
-    return (
-        pybedtools.BedTool(bam)
-        .intersect(
-            features,
-            s=stranded,
-            bed=True,
-            stream=True,
-        )
-    ).count()
-def features (featuretypes, procs, gff, bam)
-    # Some GFF files have invalid entries -- like chromosomes with negative coords
-    # or features of length = 0.  This line removes them (the `remove_invalid`
-    # method) and saves the result in a tempfile
-    g = pybedtools.BedTool(gff).remove_invalid().saveas()
-    #g = g.sort
 
-    # Set up pool of workers
-    pool = multiprocessing.Pool(processes=procs)
-
-    # Get separate files for introns and exons in parallel
-
-    a, b = pool.map(subset_featuretypes, featuretypes)
-
-    # Since `subset_featuretypes` returns filenames, we convert to BedTool objects
-    # to do intersections below.
-    a = pybedtools.BedTool(a)
-    b = pybedtools.BedTool(b)
-
-    # Identify unique and shared regions using bedtools commands subtract, merge,
-    # and intersect.
-    a =a.sort()
-    b = b.sort()
+    if features!=None:
+        if featurefile:
+            print(f'given both file name and feature set: Using variable, ignoring file: {featurefile}')
+    else:
+        features=pybedtools.BedTool(featurefile).sort().merge() #sort and merge all features in feature file to categorize whole genome as feature or non-feature
+    bambed = pybedtools.BedTool(bam)
+    mapped =(bambed.intersect(features,s=False,bed=True,stream=True,)).count()
+    #total = pybedtools.BedTool(bam).count()
+    return mapped#, total
+def intersection (a,b):
+    #takes two BedTool objects and returns three BedTool objects of overlap, and non-overlapping regions of each.
     a_only = a.subtract(b).merge()
     b_only = b.subtract(a).merge()
     a_and_b = (
         a
         .intersect(b)
         .merge()
-    )
-    print(f'{len(pybedtools.BedTool(bam))} reads')
-    print(f'{len(g)} annotations')
-    print(f'{len(a)} {featuretypes[0]}')
-    print(f'{len(b)} {featuretypes[1]}')
-    print(f'{len(a_only)} {featuretypes[0]} onlys')
-    print(f'{len(b_only)} {featuretypes[1]} onlys')
-    print(f'{len(a_and_b)} {featuretypes[0]} and {featuretypes[1]}')
+        )
+    return a_only, b_only, a_and_b
 
-    # Do intersections with BAM file in parallel. Note that we're passing filenames
-    # to multiprocessing.Pool rather than BedTool objects.
-    features = (a_only.fn, b_only.fn, a_and_b.fn)
+def featuresets (gff, featuretypes=['intron', 'exon'],save=False):
+    # Takes a gff file and list of feature types. Returns a list of BedTool objects for each specified featuretype
+    # Some GFF files have invalid entries -- like chromosomes with negative coords
+    # or features of length = 0.  This line removes them (the `remove_invalid`
+    # method) and saves the result in a tempfile
+    g = pybedtools.BedTool(gff).remove_invalid().saveas()
+    g = g.sort()
+    sets=[]
+    for featuretype in featuretypes:
+        set=pybedtools.BedTool(subset_featuretypes(featuretype, g))
+        set=set.sort().merge() #process sets by sorting and merging overlapping features
+        if save:
+            set.saveas(f'{featuretype}.gtf')
+        sets.append(set.sort())
+    return sets
+'''
+def allpairs(source):
+    result[]
+    for feature1 in range(len(source)):
+        for feature2 in range(feature1+1,len(source)):
+            result.append([source[feature1],source[feature2]])
+    return result
+'''
+#returns BedTool containing only the starting nt position when given a BedTool including strand orientation
+def startsite (feature):
+    if feature.strand=="+":
+        feature.stop=feature.start
+    elif feature.strand=="-":
+        feature.start=feature.stop
+    return feature
 
-    # Run count_reads_in_features in parallel over features
-    results = pool.map(count_reads_in_features, features)
+#returns list of distances and BedTool object containing list of distances between each feature in a given queryfile (bam) and the closest feature in the given refrence file. given featurename used for labeling output. If position=start, distance to startting nt of refrence features will be used to calculate distance.
+def closest(queryfilename, refrencefilename, featurename=['TSS'], position="start",limit=1000,quiet=False):
+    distances=[]
+    closedistances=[]
+    query=pybedtools.BedTool(queryfilename).bam_to_bed().sort()
+    refrence=pybedtools.BedTool(refrencefilename).sort()
+    #if position is start, make a duplicate refrence site with only startsite nt
+    if position=='start':
+        refrence=refrence.each(startsite).sort().saveas()
+    #transcripts=pybedtools.BedTool('./refrence_datasets/annotations/gencode.v32.transcript.gtf')
+    #query=pybedtools.BedTool('./05IS.bam')
+    b=query.closest(refrence,d=True)
+    for i in b: #make list of distances
+        distances.append(i.count)
+        if i.count<=limit:
+            closedistances.append(i.count)
+    average=statistics.mean(distances)
+    standarddev=statistics.stdev(distances)
+    if not quiet:
+        print('average distance to {0}\t{1:,}'.format(featurename, round(average)))
+        print('standard deviation distance to {0}\t{1:,}'.format(featurename, round(standarddev)))
+        print('Sites within {0} bp of {1}\t{2:,}'.format(limit,featurename, len(closedistances)))
+    return distances, average, standarddev, len(closedistances), b
 
+#main function to map features in IS bam file to feature file (gff/gtf/bed). if single=Falso, map to given featurenames list in feature file. if single=True, all features in feature file are treated as the target feature. If save=True, each subset of features is saved as new file.
+def featuremap (gff, bam, featurenames=['intron', 'exon'],single=False,save=False,procs=3):   
+    pool = multiprocessing.Pool(processes=procs)
+    results=[]
+    if single:
+        #single feature type in refrence gff/gtf/bed file
+        results.append(count_reads_in_features(gff,bam,features=None))        
+        #featurenames=['mapped']
+    else:
+        #multipse feature types in refrence gff/gtf
+        sets = featuresets(gff, featurenames,save=save)
+        for feature in sets:
+            results.append(count_reads_in_features(None,bam,features=feature))
     
-    return results, labels
-
-
+    # Run count_reads_in_features in parallel over features
+    total = pybedtools.BedTool(bam).count()
+    featurenames.append('total')
+    results.append(total)
+    for label, reads in zip(featurenames, results):
+        print('{0}\t{1:,}'.format(label, reads))
+    return results
+#map bam reads to featuresets
 if __name__ == "__main__":
 
     ap = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
                                  usage=__doc__)
-    ap.add_argument('--gff', required=True,
+    ap.add_argument('-a', required=True,
                     help='GFF or GTF file containing annotations')
-    ap.add_argument('--bam', required=True,
+    ap.add_argument('-m', '--gff', default=False, action='store_true', 
+                    help='specify if annotation file is gtf/gff file with multiple annotations instead of gtf/gff/bam for single annotation type')
+    ap.add_argument('-b', '--bam', required=True,
                     help='BAM file containing reads to be counted')
-    ap.add_argument('--stranded', action='store_true',
-                    help='Use strand-specific merging and overlap. '
-                         'Default is to ignore strand')
-    ap.add_argument('--processes', default=1, type=int,
+    ap.add_argument('-p','--processes', default=3, type=int,
                     help='Number of processes to use in parallel.')
     ap.add_argument('-v', '--verbose', action='store_true',
                     help='Verbose (goes to stderr)')
+    ap.add_argument('-s', '--save', action='store_true', help='save gtf of subset of feature from given gtf file')
+    ap.add_argument('-f', '--feature', default=None, help='feature to map from gff/gtf file, default intron & exon')
     args = ap.parse_args()
 
+    procs=args.processes
     gff = args.gff
+    annotations = args.a
     bam = args.bam
-    stranded = args.stranded
-    procs = args.processes
-    featuretypes = ['intron', 'exon']
+    save = args.save
+    if args.feature==None:
+        featurenames = ['intron', 'exon']
+    else:
+        featurenames = [f'{args.feature}']
 
-
-    if args.processes > 3:
-        print(
-            "Only need 3 processes (one each for exon, intron, both), so "
-            "resetting processes from {0} to 3".format(args.processes)
-        )
-        args.processes = 3
-    features (featuretypes, procs, gff, bam)
-
-    labels = (f'{featuretypes[0]}_only',
-              f'{featuretypes[1]}_only',
-              f'{featuretypes[0]}_and_{featuretypes[1]}')
-
-    for label, reads in zip(labels, results):
-    print('{0}\t{1}'.format(label, reads))
+    if gff:
+        featuremap (annotations, bam, featurenames=featurenames,save=save,procs=3)
+    else:
+        featuremap (annotations, bam, single=True, save=save, procs=3)

@@ -24,7 +24,7 @@ userandomSEQS=0 #generate random sequence data, usefull for calculating false po
 #tasks:
 getseqs=1#1#get sequences from either entrez or local TwoBit genome around locations indicated by genome_location_csv
 compressreads=1 #remove duplicate reads and reads shifted +/- 1 nt, number of reads are compressed in csv and fasta
-getannotations=0#1 # uses VEP to get anotations for insertion sites (needs writevepfile)
+getannotations=1#1 # use annotate.py module to map insertion sites to anotations 
 
 #parameters
 barcode='ATCTGCGACG' #5' barcode sequence 05:ATCTGCGACG
@@ -37,12 +37,15 @@ primer5='GGGTTCCGCCGGATGGC' #5' primer sequenc to remove from reads
 primer3='CCTAACTGCTGTGCCACT' #3' primer sequence to remove from reads
 trim5=21 #additional (non-genomic) nts to trim off of 3' end of reads
 trim3=16 #additional (non-genomic) nts to trim off of 5' end of reads (starts with TA)
+featurenames=['intron', 'exon','codingexon','transcript','TSS'] #feature names found in feature files to map reads to
+featuredist=[False,False,False,False,True]# weather to map distance of each read, or only whether reads overlap with feature
+distance=1000 # distance in bp to be considered close to feature
 
 #outputs:
 write_csv=1 # write csv (only relevant if reading from sam file)
 writeFASTA=1#1#write a fasta file of all sequences around IS
 writelogo=1#1#create a logo image of consensus sequence # requires getseqs and writeFASTA to be on
-writevepfile=0#write a vep file to use with vep, either online or by setting getannotations to 1
+#writevepfile=0#write a vep file to use with vep, either online or by setting getannotations to 1
 
 #specified file names
 rootname=os.path.splitext(inputfile)[0]
@@ -52,20 +55,22 @@ sam_file=f'{rootname}.sam'#,'02-wind20-70.sam','03-wind20-70.sam','04-wind20-70.
 genome_location_csv=f'{rootname}_IS_mappings.csv'#'IS_data.csv'
 trimmedfastq=f'{rootname}_trimmed.fastq' # fastq file with adapters/primers/barcodes trimmed off with cutadapt
 FASTAfile=f'{rootname}_retrieved_2bit.fasta'#output fasta file containing sequences surrounding mapped insertion site
-outputVEPfile=f"{rootname}_VEPfile.csv" #VEP file containing mapped locations of insertions in VEP format so VEP can provide annotations
+#outputVEPfile=f"{rootname}_VEPfile.csv" #VEP file containing mapped locations of insertions in VEP format so VEP can provide annotations
 logofile=f"{rootname}IS_logo.svg" # logo file showing consensus integration site in logo format
-annotationsfile=f'{rootname}_IS_annotations.csv'
+annotationsfile=f'{rootname}_IS_annotations.csv' # file contoining summary of mapping to annotations
+distancesfile=f'{rootname}_distances.csv' # file containing list of distances of each read to nearest TSS
 logfile=f'{rootname}.log'
-ISsamfilename=f'{rootname}IS.bam'#sam file name for single nt IS mappings
+ISbamfilename=f'{rootname}IS.bam'#sam file name for single nt IS mappings
 
 #refrence file locations
 chromosome_ids = './refrence_datasets/chromosomes.csv'
-veplocation = './ensembl-vep/vep'
+#veplocation = './ensembl-vep/vep'
 bowtielocation = 'bowtie2'
 bowtieindex = './refrence_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index'
 weblogolocation = 'weblogo' #in PATH
 twobitlocation = './scripts/TwoBitToFa'
 twobitgenomelocation='./refrence_datasets/genomes/GRCh38.2bit'
+annotations=['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcript.gtf','./refrence_datasets/annotations/gencode.v32.transcript.gtf'] #annotations file in gff, gtf, or bed format,
 
 #sanity checks:
 if inputtype=="sam":
@@ -87,10 +92,12 @@ else:
 #if getseqs or writeFASTA or writevepfile:
 #	if read_sam_file == read_csv == 0:#
 #		sys.exit(colorama.Fore.RED + 'Cannot get sequences, write a FASTA, or write a VEP file without being given a csv or sam file')
-if (writeFASTA == 1 or writevepfile ==1 or writelogo ==1 or getannotations==1) and getseqs == 0:
-	sys.exit(colorama.Fore.RED + "Can't write a fasta file, vep file, or logo file, or get annotations without getting sequences.")
+if (writeFASTA == 1 or writelogo ==1 or getannotations==1) and getseqs == 0: #or writevepfile ==1 
+	sys.exit(colorama.Fore.RED + "Can't write a fasta file or logo file, or get annotations without getting sequences.") #, vep file, 
 if sequencesource != 'LOCAL' and sequencesource != 'REMOTE' and getseqs == 1:
 	sys.exit(colorama.Fore.RED + "Must specify 'LOCAL' or 'REMOTE' source to get sequences")
+if getannotations and not len(annotations)==len(featurenames)==len(featuredist):
+		sys.exit(colorama.Fore.RED + "If getting annotations, length of annotation files, feature names, and feature distance must be the same")
 
 reads=[]
 recordlist=[]        
@@ -142,8 +149,8 @@ elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-
 	if userandomSEQS:
 		FASTQ.randomize(fastareads,format='fasta')
 	#add bowtie mapping function to map plasmid sequences?
-	bowtiecommand=f'{bowtielocation} -f -x {bowtieindex} -p 4 -U {fastareads} -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
-	print(f'mapping reads genome using bowtie2. Writing output to'+colorama.Fore.YELLOW+f' {rootname}.sam'+colorama.Style.RESET_ALL+f' and '+colorama.Fore.YELLOW+f'{rootname}_bowtie.log'+colorama.Style.RESET_ALL)
+	bowtiecommand=f'{bowtielocation} -f -x {bowtieindex} -p 4 -U {fastareads} -S {sam_file}' #2>&1 | tee {rootname}_bowtie.log'
+	print(f'mapping reads genome using bowtie2. Writing output to'+colorama.Fore.YELLOW+f' {sam_file}'+colorama.Style.RESET_ALL+f' and '+colorama.Fore.YELLOW+f'{rootname}_bowtie.log'+colorama.Style.RESET_ALL)
 	print(colorama.Fore.CYAN+f'{bowtiecommand}'+colorama.Style.RESET_ALL)
 	bowtie=runbin.Command(bowtiecommand)
 	bowtieout=bowtie.run(timeout=20000)
@@ -151,7 +158,7 @@ elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-
 	print(colorama.Fore.RED+f'{bowtieout[2].decode()}'+colorama.Style.RESET_ALL)
 
 if inputtype=="sam" or mapreads:
-	readslist, unmapped = mappedreads.read_sam(sam_file,chromIDS,ISsamfilename, compressreads=compressreads,random=userandomIS)
+	readslist, unmapped = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,random=userandomIS)
 
 if write_csv:
 	mappedreads.write_csv(readslist,genome_location_csv)
@@ -174,7 +181,7 @@ if writelogo: #dependant on having sequences, optional to make logo plot
 	print(colorama.Fore.YELLOW + f'{weblogocommand}')
 	logocommand=runbin.Command(weblogocommand)
 	logoout=logocommand.run(timeout=1800) 
-
+'''
 if writevepfile:
 	reads = sorted(readslist, key = lambda x: (x.chrom, x.loc))
 	print(colorama.Style.RESET_ALL + f'Writing file for VEP analysis: '+colorama.Fore.YELLOW + f'{outputVEPfile}')
@@ -186,8 +193,27 @@ if writevepfile:
 			elif entry.chrom == 24:
 				entry.chrom ="Y"
 			csv_writer.writerow([entry.chrom, str(entry.loc+1), entry.loc, "-/A", entry.sense])
-
+'''
 if getannotations:
+	with open(annotationsfile, 'w', newline='') as output_file:
+		totalprinted=False
+		output_writer = csv.writer(output_file, delimiter=",")
+		for i in range(len(featurenames)):
+			if featuredist[i]:
+				distances, average, standarddev, close, b = annotate.closest (ISbamfilename,annotations[i],featurename=featurenames[i],limit=distance,position="start")
+				output_writer.writerow([f'{featurenames[i]}(average distance)',average])
+				output_writer.writerow([f'{featurenames[i]}(standard deviation)',standarddev])
+				output_writer.writerow([f'integration events within {distance} bp of {featurenames[i]}',close])
+				with open(distancesfile, 'w', newline='') as distance_file:
+					dist_writer = csv.writer(distance_file, delimiter=",")
+					dist_writer.writerow(distances)
+			else:
+				results = annotate.featuremap (annotations[i], ISbamfilename, featurenames=featurenames[i], single=True ,procs=3)
+				output_writer.writerow([f'reads mapped to {featurenames[i]}', results[0]])
+				if not totalprinted: #featuremap returns total reads, add this line only once as it should be the same for each feature.
+					output_writer.writerow([f'total reads', results[1]])
+					totalprinted=True
+	'''
 	vepcommand=f'{veplocation} -i {outputVEPfile} -o {annotationsfile} --force_overwrite --buffer_size 100000 --merged --format "ensembl" --cache --nearest gene --distance 1 --offline --use_given_ref --fork 4 --pick' #runs vep using "--merged" ensembl and refseq genomes (what i currently have "--cached" on my machine). return the "--nearest gene". --distance from query to look for genes. maybe add --symbol --protein --ccds. Maybe add back: --numbers --domains --biotype --hgvs add --merged --gencode_basci
 	print(colorama.Style.RESET_ALL + f'Running VEP analysis to annotate genomic positions using ensembl vep.'+colorama.Fore.YELLOW + f'"{vepcommand}"')
 	vep=runbin.Command(vepcommand)
@@ -196,7 +222,7 @@ if getannotations:
 		print(vepout[1]) #STDOUT
 	if len(vepout[2])>0:
 		print(vepout[2]) #ERRORS
-
+	'''
 programend = time.time()
 message=(colorama.Fore.GREEN + f'Completed all tasks in {int(programend-programstart)} seconds. Exiting.'+colorama.Style.RESET_ALL)
 print(message)

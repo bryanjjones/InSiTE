@@ -15,6 +15,7 @@ import getseq
 import twobitreader
 import annotate
 import argparse
+import logging
 
 #inputs:
 inputtype='fastq' #sam, csv, fasta, fastq
@@ -111,8 +112,8 @@ if __name__ == "__main__":
 		inputfile = args.sam
 		inputtipe = 'sam'
 	if not bool(args.fasta)+bool(args.fastq)+bool(args.csv)+bool(args.sam) == 1:
-		print('please only provide a single input file (fasta/fastq/sam/bam/csv)')
-		exit()
+		loggging.critical('please only provide a single input file (fasta/fastq/sam/bam/csv)')
+		sys.exit('please only provide a single input file (fasta/fastq/sam/bam/csv)')
 	userandomIS = args.rand_is
 	userandomSEQS = args.rand_nt
 	getseqs = not args.no_seqs
@@ -133,8 +134,8 @@ if __name__ == "__main__":
 	trim3 = args.trim3
 	if args.feature:
 		if not len(args.feature)==len(args.dist)==len(args.annotations):
-			print('must provide same number of features as distance and annotation files as they correspond to each other')
-			exit()
+			logging.critical('must provide same number of features as distance and annotation files as they correspond to each other')
+			sys.exit('must provide same number of features as distance and annotation files as they correspond to each other')
 		featurenames = args.feature
 		featuredist = args.dist
 		annotations = args.annotations
@@ -164,6 +165,8 @@ distancesfile=f'{rootname}_distances.csv' # file containing list of distances of
 logfile=f'{rootname}.log'
 ISbamfilename=f'{rootname}IS.bam'#sam file name for single nt IS mappings
 
+logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG)
+
 #sanity checks:
 if inputtype=="sam":
 	read_sam_file=1
@@ -172,6 +175,7 @@ elif inputtype=="csv":
 	read_csv=1
 	mapreads=0
 	if getseqs==0:
+		logging.critical('Given a csv file, but not asked to get seqs. Nothing to do.')
 		sys.exit(colorama.Fore.RED + 'Given a csv file, but not asked to get seqs. Nothing to do.')
 elif inputtype=="fasta":
 	read_fasta=1
@@ -180,16 +184,20 @@ elif inputtype=="fastq":
 	read_fastq=1
 	mapreads=1
 else:
+	logging.critical("Specify input file type as 'sam', 'csv', 'fasta', or 'fastq'")
 	sys.exit(colorama.Fore.RED + 'Specify input file type as \'sam\', \'csv\', \'fasta\', or \'fastq\'')
 #if getseqs or writeFASTA or writevepfile:
 #	if read_sam_file == read_csv == 0:#
 #		sys.exit(colorama.Fore.RED + 'Cannot get sequences, write a FASTA, or write a VEP file without being given a csv or sam file')
 if (writeFASTA == 1 or writelogo ==1 or getannotations==1) and getseqs == 0: #or writevepfile ==1 
+	logging.critical("Can't write a fasta file or logo file, or get annotations without getting sequences.")
 	sys.exit(colorama.Fore.RED + "Can't write a fasta file or logo file, or get annotations without getting sequences.") #, vep file, 
 if sequencesource != 'LOCAL' and sequencesource != 'REMOTE' and getseqs == 1:
+	logging.critical("Must specify 'LOCAL' or 'REMOTE' source to get sequences")
 	sys.exit(colorama.Fore.RED + "Must specify 'LOCAL' or 'REMOTE' source to get sequences")
 if getannotations and not len(annotations)==len(featurenames)==len(featuredist):
-		sys.exit(colorama.Fore.RED + "If getting annotations, length of annotation files, feature names, and feature distance must be the same")
+	logging.critical("If getting annotations, length of annotation files, feature names, and feature distance must be the same")
+	sys.exit(colorama.Fore.RED + "If getting annotations, length of annotation files, feature names, and feature distance must be the same")
 
 reads=[]
 recordlist=[]        
@@ -223,8 +231,8 @@ if inputtype=="fastq":
 	FASTQ.Trim(inputfile,trimmedfastq,barcode, primer5, primer3, trim3, trim5, minimum_read_len)
 	#FASTQ.QtoA(trimmedfastq, f'{rootname}.fasta', Ltrim=0, trim=0)
 	if len(open(trimmedfastq).readlines())==0:
-		print(colorama.Fore.RED+f'No sequences left after trimming. Exiting'+colorama.Style.RESET_ALL)
-		exit()
+		logging.critical(f'No sequences left after trimming. Exiting')
+		sys.exit(colorama.Fore.RED+f'No sequences left after trimming. Exiting'+colorama.Style.RESET_ALL)
 	if userandomSEQS: #replace all real reads with random NT
 		FASTQ.randomize(trimmedfastq,format='fastq')
 	if mapreads: #run bowtie using trimmed fastq and quality scores (--phred33)
@@ -249,7 +257,9 @@ elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-
 	print(colorama.Fore.CYAN+f'{bowtiecommand}'+colorama.Style.RESET_ALL)
 	bowtie=runbin.Command(bowtiecommand)
 	bowtieout=bowtie.run(timeout=20000)
+	logging.info(bowtieout[1].decode())
 	print(bowtieout[1].decode())
+	logging.error(bowtieout[2].decode())
 	print(colorama.Fore.RED+f'{bowtieout[2].decode()}'+colorama.Style.RESET_ALL)
 
 if inputtype=="sam" or mapreads:
@@ -302,6 +312,7 @@ if getannotations and len:
 					output_writer.writerow([f'{featurenames[i]}(standard deviation)',standarddev])
 					output_writer.writerow([f'integration events within {distance} bp of {featurenames[i]}',close])
 				except:
+					logging.error("can't write stats. Maybe there were no queries")
 					print("can't write stats. Maybe there were no queries")
 				with open(distancesfile, 'w', newline='') as distance_file:
 					dist_writer = csv.writer(distance_file, delimiter=",")

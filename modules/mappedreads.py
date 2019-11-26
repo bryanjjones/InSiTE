@@ -69,7 +69,9 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,random=False
 	readslist=[]
 	recordlist=[]
 	unmapped=[]
+	entries=0
 	for entry in samfile:
+		entries+=1
 		if entry.reference_name and (entry.reference_name[3:] in chromIDS.keys()): #check if read has a refrence to a chromosome, otherwise ignore (i.e. unmapped reads)
 			chrom=entry.reference_name[3:] #chromosome number of mapping
 			if entry.is_reverse:
@@ -93,6 +95,8 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,random=False
 			readslist.append(read_csv_line([chrom, sense, address,'',1,'','','','','',''],userandomIS=random))
 		else:
 			unmapped.append(entry)
+	print(colorama.Fore.YELLOW+f'{entries}'+colorama.Style.RESET_ALL+f' reads in sam file. '+colorama.Fore.YELLOW+f'{len(readslist)}'+colorama.Style.RESET_ALL+f' were mapped to a chromosome, '+colorama.Fore.YELLOW+f'{len(unmapped)} '+colorama.Style.RESET_ALL+f'did not map to a chromosome.')
+	message.append(f'{entries} reads in sam file. {len(readslist)} were mapped to a chromosome, {len(unmapped)} did not map to a chromosome.')
 	readslist=sorted(readslist, key=attrgetter('chrom', 'loc')) #sort the list by chromosome# and location
 	if compressreads:
 		readslist=compress(readslist)

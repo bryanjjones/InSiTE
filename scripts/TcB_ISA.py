@@ -241,6 +241,8 @@ if inputtype=="fastq":
 		bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -U {trimmedfastq} -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
 		print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
 		print(bowtiecommand)
+		logging.info(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
+		logging.info(bowtiecommand)
 		bowtie=runbin.Command(bowtiecommand)
 		bowtieout=bowtie.run(timeout=20000)
 		bowtieout[1]

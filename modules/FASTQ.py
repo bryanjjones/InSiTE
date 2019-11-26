@@ -33,36 +33,52 @@ def QtoA(inputfile, outputfile, Ltrim=0, trim=0):
 	Bio.SeqIO.write(seqs, outputfile, "fasta") #"./inprocess/"+
 	return seqs
 def Trim(inputfile,outputfile,barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='CCTAACTGCTGTGCCACT', trim3=16, trim5=21, minlen=10):
+	message=[]
 	cut1command=f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 --discard-untrimmed -o ./inprocess/temptrimmed.fastq ./{inputfile}'
 	cut2command=f'{cutadaptlocation} -u -{trim3} -j 0 -o ./inprocess/temptrimmed1.fastq ./inprocess/temptrimmed.fastq'
 	cut3command=f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.fastq'
-	print('cutting adapters/primers/barcods from reads using cutadapt. Writting output to {outputfile}')
+	print(f'cutting adapters/primers/barcods from reads using cutadapt. Writting output to {outputfile}')
 	print(colorama.Fore.CYAN +f'{cut1command}'+colorama.Style.RESET_ALL)
+	message.append(f'cutting adapters/primers/barcods from reads using cutadapt. Writting output to {outputfile}')
+	message.append(f'{cut1command}')
 	cutadapt=runbin.Command(cut1command)
 	run=cutadapt.run(timeout=20000)
 	print(run[1].decode())
 	print(colorama.Fore.RED +f'{run[2].decode()}'+colorama.Style.RESET_ALL)
 	print(colorama.Fore.CYAN +f'{cut2command}'+colorama.Style.RESET_ALL)
+	message.append(run[1].decode())
+	message.append(f'{run[2].decode()}')
+	message.append(f'{cut2command}')
 	cutadapt=runbin.Command(cut2command)
 	run=cutadapt.run(timeout=20000)
 	print(run[1].decode())
 	print(colorama.Fore.RED +f'{run[2].decode()}'+colorama.Style.RESET_ALL)
 	print(colorama.Fore.CYAN +f'{cut3command}'+colorama.Style.RESET_ALL)
+	message.append(run[1].decode())
+	message.append(f'{run[2].decode()}')
+	message.append(f'{cut3command}')
 	cutadapt=runbin.Command(cut3command)
 	run=cutadapt.run(timeout=20000)
 	print(run[1].decode())
 	print(colorama.Fore.RED +f'{run[2].decode()}'+colorama.Style.RESET_ALL)
+	message.append(run[1].decode())
+	message.append(f'{run[2].decode()}')
 	try: 
 		os.remove(f'./inprocess/temptrimmed.fastq')
 	except:
 		print(colorama.Fore.RED+f"couldn't remove ./inprocess/temptrimmed.fastq"+colorama.Style.RESET_ALL)
+		message.append(f"couldn't remove ./inprocess/temptrimmed.fastq")
 	try: 
 		os.remove(f'./inprocess/temptrimmed1.fastq')
 	except:
 		print(colorama.Fore.RED+f"coundn't remove ./inprocess/temptrimmed1.fastq"+colorama.Style.RESET_ALL)
+		message.append(f"coundn't remove ./inprocess/temptrimmed1.fastq")
+	return "\n".join(message)
 def randomize(filename, format='fasta'):
 	seqs=[]#Bio.SeqIO.read(inputfile, "fastq")
+	message=[]
 	print(f'reading '+colorama.Fore.YELLOW+f'{filename}'+colorama.Style.RESET_ALL)
+	message.append(f'reading '+f'{filename}')
 	for record in Bio.SeqIO.parse(filename, format):
 		randseq=""
 		for i in range(len(record.seq[:])):
@@ -71,7 +87,9 @@ def randomize(filename, format='fasta'):
 		print(f'randomizing records:'+colorama.Fore.BLUE +f' {record.seq[:20]}...{record.seq[-20:]}'+colorama.Style.RESET_ALL +f' sequnce number '+colorama.Fore.YELLOW +f'{len(seqs):,}'+colorama.Style.RESET_ALL, end="\r")
 		seqs.append(record)
 	print(f'\rrewriting'+colorama.Fore.YELLOW+f' {filename}'+colorama.Style.RESET_ALL)
+	message.append(f'\rrewriting'+f' {filename}')
 	Bio.SeqIO.write(seqs, filename, format) #"./inprocess/"+
+	return message
 if __name__ == "__main__":
 	
 	filelist=("../../../../mnt/c/Users/Bryan.Jones/Documents/SAMPL05.fastq",)

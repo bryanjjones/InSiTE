@@ -59,9 +59,13 @@ def compress(readslist,adjacent=True):
 
 def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,random=False):
 #if read_sam_file:
+	message=[]
 	samfile = pysam.AlignmentFile(sam_file, "r")
-	ISsamfile = pysam.AlignmentFile(ISbamfilename,'wb',template=samfile)
+	ISbamfile = pysam.AlignmentFile(ISbamfilename,'wb',template=samfile)
 	print(colorama.Fore.GREEN + f'Reading sam file: '+colorama.Style.RESET_ALL+f' {sam_file}')
+	print(colorama.Fore.GREEN + f'Writing bam file: '+colorama.Style.RESET_ALL+f' {ISbamfilename}')
+	message.append(f'Reading sam file: '+f' {sam_file}')
+	message.append(f'Writing bam file: '+f' {ISbamfilename}')
 	readslist=[]
 	recordlist=[]
 	unmapped=[]
@@ -85,7 +89,7 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,random=False
 				entry.pos=address
 				entry.query_sequence=entry.query_sequence[:1]
 				entry.query_qualities = q[:1]
-			ISsamfile.write(entry)#add entry to ISsamfile with 1 nt sequence
+			ISbamfile.write(entry)#add entry to ISbamfile with 1 nt sequence
 			readslist.append(read_csv_line([chrom, sense, address,'',1,'','','','','',''],userandomIS=random))
 		else:
 			unmapped.append(entry)
@@ -93,11 +97,13 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,random=False
 	if compressreads:
 		readslist=compress(readslist)
 	samfile.close()
-	ISsamfile.close()
-	return readslist, unmapped #ISsamfile
+	ISbamfile.close()
+	return readslist, unmapped, "\n".join(message) #ISbamfile
 #if write_csv:
 def write_csv(readslist, mapped_csv_file):
+	message=[]
 	print(colorama.Style.RESET_ALL + f'Writing reads to csv file: '+colorama.Fore.YELLOW + f'{mapped_csv_file}')
+	message.append(f'Writing reads to csv file: '+f'{mapped_csv_file}')
 	with open(mapped_csv_file, "w", newline="") as csv_file:
 		csv_writer = csv.writer(csv_file, delimiter=',') #comma delimited csv file
 		#write csv headder to match expected format
@@ -107,11 +113,13 @@ def write_csv(readslist, mapped_csv_file):
 		for i in readslist:
 			csvline=[i.chrom,i.sense,i.loc,i.gene,i.totalseqs,i.total,i.plasmid,i.sample1,i.sample2,i.sample3,i.sample4]
 			csv_writer.writerow(csvline)
-
+	return "\n".join(message)
 #Chrom,Sense,Loc,Gene,Total # IS Sequences Found,Total # IS Found,Plasmid m995,Sample1,Sample2,Sample3,Sample4
 #if read_csv:
 def read_csv(mapped_csv_file,random=False):
+	message=[]
 	print(colorama.Style.RESET_ALL + f'reading data from '+colorama.Style.GREEN + f'{mapped_csv_file}',end="\r")
+	message.append(f'reading data from '+f'{mapped_csv_file}')
 	reads=[]
 	with open(mapped_csv_file) as csv_file: #open file
 		csv_reader = csv.reader(csv_file, delimiter=',') #read lines
@@ -127,4 +135,5 @@ def read_csv(mapped_csv_file,random=False):
 				print(colorama.Style.RESET_ALL + f'Sequence {line_count-3} '+colorama.Style.RESET_ALL + 'found at chrom '+colorama.Style.GREEN + f'{thisrow.chrom}'+colorama.Style.RESET_ALL + ' with '+colorama.Style.ORANGE + f'{thisrow.sense}'+colorama.Style.RESET_ALL + ' sense '+colorama.Style.YELLOW + f'{thisrow.loc} '+colorama.Style.RESET_ALL + 'with sequence '+colorama.Style.BLUE + f'{thisrow.sequence[:5]}...{thisrow.sequence[-5:]}',end="\r" )
 				line_count += 1 
 		print(f'Processed {line_count} lines.')
-	return reads
+		message.append(f'Processed {line_count} lines.')
+	return reads, message

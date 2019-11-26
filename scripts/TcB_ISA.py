@@ -228,13 +228,15 @@ else:
 
 #trim primers and adapters from raw fastqreads, return trimmed "genomic" sequences in fasta format.
 if inputtype=="fastq":
-	FASTQ.Trim(inputfile,trimmedfastq,barcode, primer5, primer3, trim3, trim5, minimum_read_len)
+	trimlog=FASTQ.Trim(inputfile,trimmedfastq,barcode, primer5, primer3, trim3, trim5, minimum_read_len)
+	logging.info(trimlog)
 	#FASTQ.QtoA(trimmedfastq, f'{rootname}.fasta', Ltrim=0, trim=0)
 	if len(open(trimmedfastq).readlines())==0:
 		logging.critical(f'No sequences left after trimming. Exiting')
 		sys.exit(colorama.Fore.RED+f'No sequences left after trimming. Exiting'+colorama.Style.RESET_ALL)
 	if userandomSEQS: #replace all real reads with random NT
-		FASTQ.randomize(trimmedfastq,format='fastq')
+		trimlog=FASTQ.randomize(trimmedfastq,format='fastq')
+		logging.info(trimlog)
 	if mapreads: #run bowtie using trimmed fastq and quality scores (--phred33)
 		bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -U {trimmedfastq} -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
 		print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
@@ -244,6 +246,8 @@ if inputtype=="fastq":
 		bowtieout[1]
 		print(bowtieout[1].decode())
 		print(bowtieout[2].decode())	
+		logging.info(bowtieout[1].decode())
+		logging.info(bowtieout[2].decode())	
 
 
 #map reads from fasta file to genome, return sam file with genome locations
@@ -255,6 +259,8 @@ elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-
 	bowtiecommand=f'{bowtielocation} -f -x {bowtieindex} -p 4 -U {fastareads} -S {sam_file}' #2>&1 | tee {rootname}_bowtie.log'
 	print(f'mapping reads genome using bowtie2. Writing output to'+colorama.Fore.YELLOW+f' {sam_file}'+colorama.Style.RESET_ALL+f' and '+colorama.Fore.YELLOW+f'{rootname}_bowtie.log'+colorama.Style.RESET_ALL)
 	print(colorama.Fore.CYAN+f'{bowtiecommand}'+colorama.Style.RESET_ALL)
+	logging.info(f'mapping reads genome using bowtie2. Writing output to'+f' {sam_file}'+f' and '+f'{rootname}_bowtie.log')
+	logging.info(f'{bowtiecommand}')
 	bowtie=runbin.Command(bowtiecommand)
 	bowtieout=bowtie.run(timeout=20000)
 	logging.info(bowtieout[1].decode())
@@ -263,10 +269,11 @@ elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-
 	print(colorama.Fore.RED+f'{bowtieout[2].decode()}'+colorama.Style.RESET_ALL)
 
 if inputtype=="sam" or mapreads:
-	readslist, unmapped = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,random=userandomIS)
-
+	readslist, unmapped, message = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,random=userandomIS)
+	logging.info(message)
 if write_csv:
-	mappedreads.write_csv(readslist,genome_location_csv)
+	message=mappedreads.write_csv(readslist,genome_location_csv)
+	logging.info(message)
 
 #Chrom,Sense,Loc,Gene,Total # IS Sequences Found,Total # IS Found,Plasmid m995,Sample1,Sample2,Sample3,Sample4
 
@@ -284,6 +291,8 @@ if writelogo: #dependant on having sequences, optional to make logo plot
 	weblogocommand=f'{weblogolocation} -f {FASTAfile} -D fasta -o {logofile} -F svg -A dna -F png --resolution 600 -s large -c classic -i {str(int(1-1*lwindow))} -l -10 -u 10 '#-l [lower bound] -u [upper bound]
 	print(colorama.Style.RESET_ALL + f'Writing logo')
 	print(colorama.Fore.YELLOW + f'{weblogocommand}'+colorama.Style.RESET_ALL)
+	logging.info( f'Writing logo')
+	logging.info( f'{weblogocommand}')
 	logocommand=runbin.Command(weblogocommand)
 	logoout=logocommand.run(timeout=1800) 
 '''
@@ -306,7 +315,9 @@ if getannotations and len:
 		for i in range(len(featurenames)):
 			if featuredist[i]:
 				print(colorama.Style.RESET_ALL+f'mapping insertion site distances to '+colorama.Fore.YELLOW+f'{featurenames[i]}'+colorama.Style.RESET_ALL+f' in '+colorama.Fore.YELLOW+f'{annotations[i]}'+colorama.Style.RESET_ALL)
-				distances, average, standarddev, close, b = annotate.closest (ISbamfilename,annotations[i],featurename=featurenames[i],limit=distance,position="start")
+				logging.info(f'mapping insertion site distances to '+f'{featurenames[i]}'+f' in '+f'{annotations[i]}')
+				distances, average, standarddev, close, b , message= annotate.closest (ISbamfilename,annotations[i],featurename=featurenames[i],limit=distance,position="start")
+				logging.info(message)
 				try:
 					output_writer.writerow([f'{featurenames[i]}(average distance)',average])
 					output_writer.writerow([f'{featurenames[i]}(standard deviation)',standarddev])
@@ -319,8 +330,10 @@ if getannotations and len:
 					dist_writer.writerow(distances)
 			else:
 				print(colorama.Style.RESET_ALL+f'mapping insertion sites to'+colorama.Fore.YELLOW+f' {featurenames[i]}'+colorama.Style.RESET_ALL+f' in '+colorama.Fore.YELLOW+f'{annotations[i]}'+colorama.Style.RESET_ALL)
-				results = annotate.featuremap (annotations[i], ISbamfilename, featurenames=featurenames[i], single=True ,procs=3)
+				logging.info(f'mapping insertion sites to'+f' {featurenames[i]}'+f' in '+f'{annotations[i]}')
+				results, message = annotate.featuremap (annotations[i], ISbamfilename, featurenames=featurenames[i], single=True ,procs=3)
 				output_writer.writerow([f'reads mapped to {featurenames[i]}', results[0]])
+				logging.info(message)
 				if not totalprinted: #featuremap returns total reads, add this line only once as it should be the same for each feature.
 					output_writer.writerow([f'total reads', results[1]])
 					totalprinted=True
@@ -336,5 +349,6 @@ if getannotations and len:
 	'''
 programend = time.time()
 message=(colorama.Fore.GREEN + f'Completed all tasks in {int(programend-programstart)} seconds. Exiting.'+colorama.Style.RESET_ALL)
+logging.info(message)
 print(message)
 exit()

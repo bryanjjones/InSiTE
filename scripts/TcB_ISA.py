@@ -14,6 +14,7 @@ import mappedreads
 import getseq
 import twobitreader
 import annotate
+import argparse
 
 #inputs:
 inputtype='fastq' #sam, csv, fasta, fastq
@@ -47,6 +48,107 @@ writeFASTA=1#1#write a fasta file of all sequences around IS
 writelogo=1#1#create a logo image of consensus sequence # requires getseqs and writeFASTA to be on
 #writevepfile=0#write a vep file to use with vep, either online or by setting getannotations to 1
 
+#refrence file locations
+chromosome_ids = './refrence_datasets/chromosomes.csv'
+#veplocation = './ensembl-vep/vep'
+bowtielocation = 'bowtie2'
+bowtieindex = './refrence_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index'
+weblogolocation = 'weblogo' #in PATH
+twobitlocation = './scripts/TwoBitToFa'
+twobitgenomelocation='./refrence_datasets/genomes/GRCh38.2bit'
+annotations=['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcripts.gtf','./refrence_datasets/annotations/gencode.v32.transcripts.gtf'] #annotations file in gff, gtf, or bed format,
+if __name__ == "__main__":
+
+	ap = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
+	                             usage=__doc__)
+	ap.add_argument('-q', '--fastq', help='fastq input file')
+	ap.add_argument('-r', '--rand_is', default=False, action='store_true', 
+	                help='use random integration sites matched to given query set instead of actual query set')
+	ap.add_argument('-n', '--rand_nt', default=False, action='store_true',
+	                help='use random sequences for mapping')
+	ap.add_argument('-c','--csv', help='csv input file')
+	ap.add_argument('-a','--fasta', help='fasta input file')
+	ap.add_argument('-s','--sam', help='sam/bam input file')
+	ap.add_argument('--no_seqs', default=False, action='store_true',
+	                help='do not get sequences from either entrez or local TwoBit genome around locations indicated by genome_location_csv')
+	ap.add_argument('-z', '--compress_reads', action='store_true', help='compress duplicate reads and reads shifted +/- 1nt, number of reads are compressed in csv, fasta, and mapping outputs')
+	ap.add_argument('--no_annotate', default=False, action='store_true', help='do not map insertion sites to genome annotations')
+	ap.add_argument('--barcode', default='ATCTGCGACG', help=' barcode sequence to trim off of reads')
+	ap.add_argument('--lwindow', default=50, help='numebr of nucleotides upstream of integration site to return', type=int) #window on either side of indicated nt location to return
+	ap.add_argument('--rwindow', default=50, help='number of nucleotides downstream of integration site to return', type=int) #window on either side of indicated nt location to return
+	ap.add_argument('--samwindow', default=0, type=int, help='depreciated')#60
+	ap.add_argument('--remote', action='store_true', help="get sequences from entrez server instead of 'LOCAL' TwoBit genome")
+	ap.add_argument('--min', default=25, type=int, help='minimum length of a read to try mapping. default (25) will usually avoid any false positives in read sets of 200k reads')
+	ap.add_argument('--primer5', default='GGGTTCCGCCGGATGGC', help="5' primer sequenc to remove from reads") 
+	ap.add_argument('--primer3', default='CCTAACTGCTGTGCCACT', help="3' primer sequence to remove from reads")
+	ap.add_argument('--trim5', default=21, type=int, help="additional (non-genomic) nts to trim off of 3' end of reads")
+	ap.add_argument('--trim3', default=16, type=int, help="additional (non-genomic) nts to trim off of 5' end of reads (starts with TA)")
+	ap.add_argument('--feature', action='append', help='feature names found in feature files to map reads to')#['intron', 'exon','codingexon','transcript','TSS'] #feature names found in feature files to map reads to
+	ap.add_argument('--dist', action='append', help='weather to map distance of each read, or only whether reads overlap with feature. same number of distance variables must be given as features.')
+	ap.add_argument('--close', default=1000, type=int, help='distance in bp to be considered close to feature')
+	ap.add_argument('--chromosome_ids', default='./refrence_datasets/chromosomes.csv')
+	ap.add_argument('--bowtielocation', default = 'bowtie2')
+	ap.add_argument('--bowtieindex', default = './refrence_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index')
+	ap.add_argument('--weblogolocation', default = 'weblogo')#in PATH
+	ap.add_argument('--twobitlocation', default = './scripts/TwoBitToFa')
+	ap.add_argument('--twobitgenomelocation', default='./refrence_datasets/genomes/GRCh38.2bit')
+	ap.add_argument('--annotations', action='append', help='location of annotation file(s) (bed/gff/gtf), must be same number of files as features specified')#['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcripts.gtf','./refrence_datasets/annotations/gencode.v32.transcripts.gtf']
+	ap.add_argument('--supress_csv', default=False, action='store_true')
+	ap.add_argument('--supress_fasta',default=False, action='store_true')
+	ap.add_argument('--supress_logo',default=False, action='store_true')
+	args = ap.parse_args()
+
+	if args.fastq:
+	 	inputfile = args.fastq
+	 	inputtype ='fastq'
+	if args.csv:
+		inputfile = args.csv
+		inputtype = 'csv'
+	if args.fasta:
+		inputfile = args.fasta
+		inputtype = 'fasta'
+	if args.sam:
+		inputfile = args.sam
+		inputtipe = 'sam'
+	if not bool(args.fasta)+bool(args.fastq)+bool(args.csv)+bool(args.sam) == 1:
+		print('please only provide a single input file (fasta/fastq/sam/bam/csv)')
+		exit()
+	userandomIS = args.rand_is
+	userandomSEQS = args.rand_nt
+	getseqs = not args.no_seqs
+	compressreads = args.compress_reads #remove duplicate reads and reads shifted +/- 1 nt, number of reads are compressed in csv and fasta
+	getannotations = not args.no_annotate
+	barcode = args.barcode
+	lwindow = args.lwindow
+	rwindow = args.rwindow
+	samwindow = args.samwindow
+	if args.remote:
+		sequencesource = 'REMOTE'
+	else:
+		sequencesorce = 'LOCAL'
+	minimum_read_len = args.min
+	primer5 = args.primer5
+	primer3 = args.primer3
+	trim5 = args.trim5
+	trim3 = args.trim3
+	if args.feature:
+		if not len(args.feature)==len(args.dist)==len(args.annotations):
+			print('must provide same number of features as distance and annotation files as they correspond to each other')
+			exit()
+		featurenames = args.feature
+		featuredist = args.dist
+		annotations = args.annotations
+	distance = args.close
+	chromosome_ids = args.chromosome_ids
+	bowtielocation = args.bowtielocation
+	bowtieindex = args.bowtieindex
+	weblogolocation = args.weblogolocation
+	twobitlocation = args.twobitlocation
+	twobitgenomelocation = args.twobitgenomelocation
+	write_csv = not args.supress_csv
+	writeFASTA = not args.supress_fasta
+	writelogo = not args.supress_logo
+
 #specified file names
 rootname=os.path.splitext(inputfile)[0]
 
@@ -61,16 +163,6 @@ annotationsfile=f'{rootname}_IS_annotations.csv' # file contoining summary of ma
 distancesfile=f'{rootname}_distances.csv' # file containing list of distances of each read to nearest TSS
 logfile=f'{rootname}.log'
 ISbamfilename=f'{rootname}IS.bam'#sam file name for single nt IS mappings
-
-#refrence file locations
-chromosome_ids = './refrence_datasets/chromosomes.csv'
-#veplocation = './ensembl-vep/vep'
-bowtielocation = 'bowtie2'
-bowtieindex = './refrence_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index'
-weblogolocation = 'weblogo' #in PATH
-twobitlocation = './scripts/TwoBitToFa'
-twobitgenomelocation='./refrence_datasets/genomes/GRCh38.2bit'
-annotations=['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcripts.gtf','./refrence_datasets/annotations/gencode.v32.transcripts.gtf'] #annotations file in gff, gtf, or bed format,
 
 #sanity checks:
 if inputtype=="sam":
@@ -130,6 +222,9 @@ else:
 if inputtype=="fastq":
 	FASTQ.Trim(inputfile,trimmedfastq,barcode, primer5, primer3, trim3, trim5, minimum_read_len)
 	#FASTQ.QtoA(trimmedfastq, f'{rootname}.fasta', Ltrim=0, trim=0)
+	if len(open(trimmedfastq).readlines())==0:
+		print(colorama.Fore.RED+f'No sequences left after trimming. Exiting'+colorama.Style.RESET_ALL)
+		exit()
 	if userandomSEQS: #replace all real reads with random NT
 		FASTQ.randomize(trimmedfastq,format='fastq')
 	if mapreads: #run bowtie using trimmed fastq and quality scores (--phred33)
@@ -194,7 +289,7 @@ if writevepfile:
 				entry.chrom ="Y"
 			csv_writer.writerow([entry.chrom, str(entry.loc+1), entry.loc, "-/A", entry.sense])
 '''
-if getannotations:
+if getannotations and len:
 	with open(annotationsfile, 'w', newline='') as output_file:
 		totalprinted=False
 		output_writer = csv.writer(output_file, delimiter=",")
@@ -202,9 +297,12 @@ if getannotations:
 			if featuredist[i]:
 				print(colorama.Style.RESET_ALL+f'mapping insertion site distances to '+colorama.Fore.YELLOW+f'{featurenames[i]}'+colorama.Style.RESET_ALL+f' in '+colorama.Fore.YELLOW+f'{annotations[i]}'+colorama.Style.RESET_ALL)
 				distances, average, standarddev, close, b = annotate.closest (ISbamfilename,annotations[i],featurename=featurenames[i],limit=distance,position="start")
-				output_writer.writerow([f'{featurenames[i]}(average distance)',average])
-				output_writer.writerow([f'{featurenames[i]}(standard deviation)',standarddev])
-				output_writer.writerow([f'integration events within {distance} bp of {featurenames[i]}',close])
+				try:
+					output_writer.writerow([f'{featurenames[i]}(average distance)',average])
+					output_writer.writerow([f'{featurenames[i]}(standard deviation)',standarddev])
+					output_writer.writerow([f'integration events within {distance} bp of {featurenames[i]}',close])
+				except:
+					print("can't write stats. Maybe there were no queries")
 				with open(distancesfile, 'w', newline='') as distance_file:
 					dist_writer = csv.writer(distance_file, delimiter=",")
 					dist_writer.writerow(distances)

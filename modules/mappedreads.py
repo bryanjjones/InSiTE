@@ -5,11 +5,12 @@ import colorama
 import Bio
 import Bio.Entrez
 import Bio.SeqIO
+import random
 from operator import attrgetter
 
 #read take a given string, formatted as row read from a csv file, and return an object with useful properties
 class read_csv_line(object):
-	def __init__(self, row, userandomIS=False):
+	def __init__(self, row):#, userandomIS=False, chromNTS={}):
 		#tries = 1
 		self.chrom=str(row[0])
 		self.sense=row[1]
@@ -17,10 +18,10 @@ class read_csv_line(object):
 			self.sensenum=1
 		elif row[1]=="-":
 			self.sensenum=2
-		if userandomIS: #if random IS used, per "read" use a random number for insertion site
-			self.loc=random.randrange(int(chromNTS[str(self.chrom)])) # random int returned in the range of the given chromosome range
-		else: #if not random, use given values
-			self.loc=int(row[2])
+		#if userandomIS: #if random IS used, per "read" use a random number for insertion site
+		#	self.loc=random.randrange(int(chromNTS[str(self.chrom)])) # random int returned in the range of the given chromosome range
+		#else: #if not random, use given values
+		self.loc=int(row[2])
 		self.gene=row[3]
 		self.totalseqs=row[4]
 		self.total=row[5]
@@ -57,14 +58,17 @@ def compress(readslist,adjacent=True):
 	else:
 		return semicompressed_readslist
 
-def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,random=False):
+def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},randomize=False):
 #if read_sam_file:
 	message=[]
 	samfile = pysam.AlignmentFile(sam_file, "r")
 	ISbamfile = pysam.AlignmentFile(ISbamfilename,'wb',template=samfile)
 	print(colorama.Fore.GREEN + f'Reading sam file: '+colorama.Style.RESET_ALL+f' {sam_file}')
-	print(colorama.Fore.GREEN + f'Writing bam file: '+colorama.Style.RESET_ALL+f' {ISbamfilename}')
 	message.append(f'Reading sam file: '+f' {sam_file}')
+	if randomize:
+		print(colorama.Fore.ORANGE + f'Randomizing sequence locations.'+colorama.Style.RESET_ALL)
+		message.append(f'Randomizing sequence locations.')
+	print(colorama.Fore.GREEN + f'Writing bam file: '+colorama.Style.RESET_ALL+f' {ISbamfilename}')
 	message.append(f'Writing bam file: '+f' {ISbamfilename}')
 	readslist=[]
 	recordlist=[]
@@ -82,7 +86,6 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,random=False
 				entry.pos=address
 				entry.query_sequence=entry.query_sequence[-1:]
 				entry.query_qualities = q[-1:]
-
 			else:
 				sense="+"
 				address=entry.get_reference_positions()[1] #chromosome position of mapping
@@ -91,8 +94,10 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,random=False
 				entry.pos=address
 				entry.query_sequence=entry.query_sequence[:1]
 				entry.query_qualities = q[:1]
+			if randomize:
+				entry.pos=address=random.randrange(int(chromNTS[str(entry.reference_name[3:])]))
 			ISbamfile.write(entry)#add entry to ISbamfile with 1 nt sequence
-			readslist.append(read_csv_line([chrom, sense, address,'',1,'','','','','',''],userandomIS=random))
+			readslist.append(read_csv_line([chrom, sense, address,'',1,'','','','','','']))#,chromNTS=chromNTS, userandomIS=random))
 		else:
 			unmapped.append(entry)
 	print(colorama.Fore.YELLOW+f'{entries}'+colorama.Style.RESET_ALL+f' reads in sam file. '+colorama.Fore.YELLOW+f'{len(readslist)}'+colorama.Style.RESET_ALL+f' were mapped to a chromosome, '+colorama.Fore.YELLOW+f'{len(unmapped)} '+colorama.Style.RESET_ALL+f'did not map to a chromosome.')

@@ -97,6 +97,7 @@ if __name__ == "__main__":
 	ap.add_argument('--supress_csv', default=False, action='store_true')
 	ap.add_argument('--supress_fasta',default=False, action='store_true')
 	ap.add_argument('--supress_logo',default=False, action='store_true')
+	ap.add_argument('--append_summary',default=False, action='store_true')
 	args = ap.parse_args()
 
 	if args.fastq:
@@ -198,7 +199,7 @@ if sequencesource != 'LOCAL' and sequencesource != 'REMOTE' and getseqs == 1:
 if getannotations and not len(annotations)==len(featurenames)==len(featuredist):
 	logging.critical("If getting annotations, length of annotation files, feature names, and feature distance must be the same")
 	sys.exit(colorama.Fore.RED + "If getting annotations, length of annotation files, feature names, and feature distance must be the same")
-
+summary=[rootname,barcode]
 reads=[]
 recordlist=[]        
 chromIDS={}
@@ -230,6 +231,10 @@ else:
 if inputtype=="fastq":
 	trimlog=FASTQ.Trim(inputfile,trimmedfastq,barcode, primer5, primer3, trim3, trim5, minimum_read_len)
 	logging.info(trimlog)
+	summary.append('raw sequences')
+	summary.append(int(len(open(inputfile).readlines())/4))#4 lines per entry in fastq
+	summary.append('trimmed sequences')
+	summary.append(int(len(open(trimmedfastq).readlines())/4))
 	#FASTQ.QtoA(trimmedfastq, f'{rootname}.fasta', Ltrim=0, trim=0)
 	if len(open(trimmedfastq).readlines())==0:
 		logging.critical(f'No sequences left after trimming. Exiting')
@@ -237,19 +242,19 @@ if inputtype=="fastq":
 	if userandomSEQS: #replace all real reads with random NT
 		trimlog=FASTQ.randomize(trimmedfastq,format='fastq')
 		logging.info(trimlog)
-	if mapreads: #run bowtie using trimmed fastq and quality scores (--phred33)
-		bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -U {trimmedfastq} -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
-		print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
-		print(bowtiecommand)
-		logging.info(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
-		logging.info(bowtiecommand)
-		bowtie=runbin.Command(bowtiecommand)
-		bowtieout=bowtie.run(timeout=20000)
-		bowtieout[1]
-		print(bowtieout[1].decode())
-		print(bowtieout[2].decode())	
-		logging.info(bowtieout[1].decode())
-		logging.info(bowtieout[2].decode())	
+	#run bowtie using trimmed fastq and quality scores (--phred33)
+	bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -U {trimmedfastq} -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
+	print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
+	print(bowtiecommand)
+	logging.info(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
+	logging.info(bowtiecommand)
+	bowtie=runbin.Command(bowtiecommand)
+	bowtieout=bowtie.run(timeout=20000)
+	bowtieout[1]
+	print(bowtieout[1].decode())
+	print(bowtieout[2].decode())	
+	logging.info(bowtieout[1].decode())
+	logging.info(bowtieout[2].decode())	
 
 
 #map reads from fasta file to genome, return sam file with genome locations
@@ -271,7 +276,7 @@ elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-
 	print(colorama.Fore.RED+f'{bowtieout[2].decode()}'+colorama.Style.RESET_ALL)
 
 if inputtype=="sam" or mapreads:
-	readslist, unmapped, message = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,random=userandomIS)
+	readslist, unmapped, message = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,chromNTS=chromNTS,randomize=userandomIS)
 	logging.info(message)
 if write_csv:
 	message=mappedreads.write_csv(readslist,genome_location_csv)
@@ -324,9 +329,16 @@ if getannotations and len:
 					output_writer.writerow([f'{featurenames[i]}(average distance)',average])
 					output_writer.writerow([f'{featurenames[i]}(standard deviation)',standarddev])
 					output_writer.writerow([f'integration events within {distance} bp of {featurenames[i]}',close])
+					summary.append(featurenames[i])
+					summary.append('average distanance')
+					summary.append(average)
+					summary.append('st dev')
+					summary.append(standarddev)
+					summary.append(f'within {distance}bp')
+					summary.append(close)
 				except:
-					logging.error("can't write stats. Maybe there were no queries")
-					print("can't write stats. Maybe there were no queries")
+					logging.error("can't write stats. Maybe there were no sequences")
+					print("can't write stats. Maybe there were no sequences")
 				with open(distancesfile, 'w', newline='') as distance_file:
 					dist_writer = csv.writer(distance_file, delimiter=",")
 					dist_writer.writerow(distances)
@@ -334,11 +346,16 @@ if getannotations and len:
 				print(colorama.Style.RESET_ALL+f'mapping insertion sites to'+colorama.Fore.YELLOW+f' {featurenames[i]}'+colorama.Style.RESET_ALL+f' in '+colorama.Fore.YELLOW+f'{annotations[i]}'+colorama.Style.RESET_ALL)
 				logging.info(f'mapping insertion sites to'+f' {featurenames[i]}'+f' in '+f'{annotations[i]}')
 				results, message = annotate.featuremap (annotations[i], ISbamfilename, featurenames=featurenames[i], single=True ,procs=3)
-				output_writer.writerow([f'reads mapped to {featurenames[i]}', results[0]])
-				logging.info(message)
 				if not totalprinted: #featuremap returns total reads, add this line only once as it should be the same for each feature.
 					output_writer.writerow([f'total reads', results[1]])
+					summary.append('reads mapped to genome')
+					summary.append(results[1])
 					totalprinted=True
+				output_writer.writerow([f'reads mapped to {featurenames[i]}', results[0]])
+				summary.append(featurenames[i])
+				summary.append(results[0])
+				logging.info(message)
+				
 	'''
 	vepcommand=f'{veplocation} -i {outputVEPfile} -o {annotationsfile} --force_overwrite --buffer_size 100000 --merged --format "ensembl" --cache --nearest gene --distance 1 --offline --use_given_ref --fork 4 --pick' #runs vep using "--merged" ensembl and refseq genomes (what i currently have "--cached" on my machine). return the "--nearest gene". --distance from query to look for genes. maybe add --symbol --protein --ccds. Maybe add back: --numbers --domains --biotype --hgvs add --merged --gencode_basci
 	print(colorama.Style.RESET_ALL + f'Running VEP analysis to annotate genomic positions using ensembl vep.'+colorama.Fore.YELLOW + f'"{vepcommand}"')
@@ -351,6 +368,10 @@ if getannotations and len:
 	'''
 programend = time.time()
 message=(colorama.Fore.GREEN + f'Completed all tasks in {int(programend-programstart)} seconds. Exiting.'+colorama.Style.RESET_ALL)
-logging.info(message)
+logging.info(f'Completed all tasks in {int(programend-programstart)} seconds. Exiting.')
+if args.append_summary:
+	with open('./summary.csv','a') as summary_file:
+		csv.writer(summary_file, delimiter=',').writerow(summary)
+
 print(message)
 exit()

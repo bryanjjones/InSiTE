@@ -57,7 +57,7 @@ bowtieindex = './refrence_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405
 weblogolocation = 'weblogo' #in PATH
 twobitlocation = './scripts/TwoBitToFa'
 twobitgenomelocation='./refrence_datasets/genomes/GRCh38.2bit'
-annotations=['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcripts.gtf','./refrence_datasets/annotations/gencode.v32.transcripts.gtf'] #annotations file in gff, gtf, or bed format,
+annotations=['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcripts.gtf','./refrence_datasets/annotations/gencode.v32.transcripts.gtf'] #['./refrence_datasets/annotations/refseq.introns.bed','./refrence_datasets/annotations/refseq.exons.bed','./refrence_datasets/annotations/refseq.codingexons.bed','./refrence_datasets/annotations/refseq.transcripts.bed','./refrence_datasets/annotations/refseq.transcripts.bed'] annotations file in gff, gtf, or bed format,
 if __name__ == "__main__":
 
 	ap = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
@@ -113,8 +113,8 @@ if __name__ == "__main__":
 		inputfile = args.sam
 		inputtipe = 'sam'
 	if not bool(args.fasta)+bool(args.fastq)+bool(args.csv)+bool(args.sam) == 1:
-		loggging.critical('please only provide a single input file (fasta/fastq/sam/bam/csv)')
-		sys.exit('please only provide a single input file (fasta/fastq/sam/bam/csv)')
+		logging.critical('please provide a single input file (fasta/fastq/sam/bam/csv)')
+		sys.exit('please provide a single input file (fasta/fastq/sam/bam/csv)')
 	userandomIS = args.rand_is
 	userandomSEQS = args.rand_nt
 	getseqs = not args.no_seqs
@@ -165,9 +165,7 @@ annotationsfile=f'{rootname}_IS_annotations.csv' # file contoining summary of ma
 distancesfile=f'{rootname}_distances.csv' # file containing list of distances of each read to nearest TSS
 logfile=f'{rootname}.log'
 ISbamfilename=f'{rootname}IS.bam'#sam file name for single nt IS mappings
-
-logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG)
-
+warnings=[]
 #sanity checks:
 if inputtype=="sam":
 	read_sam_file=1
@@ -176,7 +174,7 @@ elif inputtype=="csv":
 	read_csv=1
 	mapreads=0
 	if getseqs==0:
-		logging.critical('Given a csv file, but not asked to get seqs. Nothing to do.')
+		warnings.append('Given a csv file, but not asked to get seqs. Nothing to do.')
 		sys.exit(colorama.Fore.RED + 'Given a csv file, but not asked to get seqs. Nothing to do.')
 elif inputtype=="fasta":
 	read_fasta=1
@@ -185,19 +183,19 @@ elif inputtype=="fastq":
 	read_fastq=1
 	mapreads=1
 else:
-	logging.critical("Specify input file type as 'sam', 'csv', 'fasta', or 'fastq'")
+	warnings.append("Specify input file type as 'sam', 'csv', 'fasta', or 'fastq'")
 	sys.exit(colorama.Fore.RED + 'Specify input file type as \'sam\', \'csv\', \'fasta\', or \'fastq\'')
 #if getseqs or writeFASTA or writevepfile:
 #	if read_sam_file == read_csv == 0:#
 #		sys.exit(colorama.Fore.RED + 'Cannot get sequences, write a FASTA, or write a VEP file without being given a csv or sam file')
-if (writeFASTA == 1 or writelogo ==1 or getannotations==1) and getseqs == 0: #or writevepfile ==1 
-	logging.critical("Can't write a fasta file or logo file, or get annotations without getting sequences.")
+if (writeFASTA == 1 or writelogo ==1) and getseqs == 0: #or writevepfile ==1 or or getannotations==1
+	warnings.append("Can't write a fasta file or logo file, or get annotations without getting sequences.")
 	sys.exit(colorama.Fore.RED + "Can't write a fasta file or logo file, or get annotations without getting sequences.") #, vep file, 
 if sequencesource != 'LOCAL' and sequencesource != 'REMOTE' and getseqs == 1:
-	logging.critical("Must specify 'LOCAL' or 'REMOTE' source to get sequences")
+	warnings.append("Must specify 'LOCAL' or 'REMOTE' source to get sequences")
 	sys.exit(colorama.Fore.RED + "Must specify 'LOCAL' or 'REMOTE' source to get sequences")
 if getannotations and not len(annotations)==len(featurenames)==len(featuredist):
-	logging.critical("If getting annotations, length of annotation files, feature names, and feature distance must be the same")
+	warnings.append("If getting annotations, length of annotation files, feature names, and feature distance must be the same")
 	sys.exit(colorama.Fore.RED + "If getting annotations, length of annotation files, feature names, and feature distance must be the same")
 summary=[rootname,barcode]
 reads=[]
@@ -205,7 +203,9 @@ recordlist=[]
 chromIDS={}
 chromNTS={}
 programstart = time.time()
-
+logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG)
+if len(warnings)>0:
+	logging.critical("\n".join(warnings))
 #make a dictionary of chromosome names and ID #s usich chromosomes.csv, which is the table copied from https://www.ncbi.nlm.nih.gov/genome?term=human&cmd=DetailsSearch
 with open(chromosome_ids) as csv_file:
 	csv_reader = csv.reader(csv_file, delimiter=",")

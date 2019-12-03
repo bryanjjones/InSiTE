@@ -34,45 +34,40 @@ def QtoA(inputfile, outputfile, Ltrim=0, trim=0):
 	return seqs
 def Trim(inputfile,outputfile,barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='CCTAACTGCTGTGCCACT', trim3=16, trim5=21, minlen=10):
 	message=[]
-	cut1command=f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 --discard-untrimmed -o ./inprocess/temptrimmed.fastq ./{inputfile}'
-	cut2command=f'{cutadaptlocation} -u -{trim3} -j 0 -o ./inprocess/temptrimmed1.fastq ./inprocess/temptrimmed.fastq'
-	cut3command=f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.fastq'
+	cutcommand=[]
+	tempfiles=[]
+	if trim3>0 or trim5>0:
+		cutcommand.append(f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 --discard-untrimmed -o ./inprocess/temptrimmed.fastq ./{inputfile}')
+		tempfiles.append('./inprocess/temptrimmed.fastq')
+		if trim3>0 and trim5>0: #both trim3 and 5
+			cutcommand.append(f'{cutadaptlocation} -u -{trim3} -j 0 -o ./inprocess/temptrimmed1.fastq ./inprocess/temptrimmed.fastq')
+			cutcommand.append(f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.fastq')
+			tempfiles.append('./inprocess/temptrimmed1.fastq')
+		elif trim3>0: #only trim3
+			cutcommand.append(f'{cutadaptlocation} -u -{trim3} -j 0 -m {minlen} -o {outputfile}  ./inprocess/temptrimmed.fastq')
+		else: #only trim5
+			cutcommand.append(f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.fastq')
+	else: 
+		cutcommand.append(f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 -m {minlen} --discard-untrimmed -o {outputfile} ./{inputfile}')
+	
 	print(f'cutting adapters/primers/barcods from reads using cutadapt. Writting output to {outputfile}')
-	print(colorama.Fore.CYAN +f'{cut1command}'+colorama.Style.RESET_ALL)
-	message.append(f'cutting adapters/primers/barcods from reads using cutadapt. Writting output to {outputfile}')
-	message.append(f'{cut1command}')
-	cutadapt=runbin.Command(cut1command)
-	run=cutadapt.run(timeout=20000)
-	print(run[1].decode())
-	print(colorama.Fore.RED +f'{run[2].decode()}'+colorama.Style.RESET_ALL)
-	print(colorama.Fore.CYAN +f'{cut2command}'+colorama.Style.RESET_ALL)
-	message.append(run[1].decode())
-	message.append(f'{run[2].decode()}')
-	message.append(f'{cut2command}')
-	cutadapt=runbin.Command(cut2command)
-	run=cutadapt.run(timeout=20000)
-	print(run[1].decode())
-	print(colorama.Fore.RED +f'{run[2].decode()}'+colorama.Style.RESET_ALL)
-	print(colorama.Fore.CYAN +f'{cut3command}'+colorama.Style.RESET_ALL)
-	message.append(run[1].decode())
-	message.append(f'{run[2].decode()}')
-	message.append(f'{cut3command}')
-	cutadapt=runbin.Command(cut3command)
-	run=cutadapt.run(timeout=20000)
-	print(run[1].decode())
-	print(colorama.Fore.RED +f'{run[2].decode()}'+colorama.Style.RESET_ALL)
-	message.append(run[1].decode())
-	message.append(f'{run[2].decode()}')
-	try: 
-		os.remove(f'./inprocess/temptrimmed.fastq')
-	except:
-		print(colorama.Fore.RED+f"couldn't remove ./inprocess/temptrimmed.fastq"+colorama.Style.RESET_ALL)
-		message.append(f"couldn't remove ./inprocess/temptrimmed.fastq")
-	try: 
-		os.remove(f'./inprocess/temptrimmed1.fastq')
-	except:
-		print(colorama.Fore.RED+f"coundn't remove ./inprocess/temptrimmed1.fastq"+colorama.Style.RESET_ALL)
-		message.append(f"coundn't remove ./inprocess/temptrimmed1.fastq")
+	for command in cutcommand:		
+		print(colorama.Fore.CYAN +f'{command}'+colorama.Style.RESET_ALL)
+		message.append(f'cutting adapters/primers/barcods from reads using cutadapt. Writting output to {outputfile}')
+		message.append(f'{command}')
+		cutadapt=runbin.Command(command)
+		run=cutadapt.run(timeout=20000)
+		print(run[1].decode())
+		print(colorama.Fore.RED +f'{run[2].decode()}'+colorama.Style.RESET_ALL)
+		message.append(run[1].decode())
+		message.append(f'{run[2].decode()}')
+
+	for file in tempfiles:
+		try: 
+			os.remove(file)
+		except:
+			print(colorama.Fore.RED+f"couldn't remove {file}"+colorama.Style.RESET_ALL)
+			message.append(f"couldn't remove {file}")
 	return "\n".join(message)
 def randomize(filename, format='fasta'):
 	seqs=[]#Bio.SeqIO.read(inputfile, "fastq")

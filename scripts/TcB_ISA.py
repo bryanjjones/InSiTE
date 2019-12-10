@@ -8,7 +8,7 @@ import FASTQ
 import Bio.SeqIO
 import colorama
 import os
-#import pysam
+import pysam
 import runbin
 import mappedreads
 import getseq
@@ -236,9 +236,9 @@ if inputtype=="fastq":
 	print('input type fastq')
 	trimlog=FASTQ.Trim(inputfile,trimmedfastq,barcode, primer5, primer3, trim3, trim5, minimum_read_len)
 	logging.info(trimlog)
-	summary.append('raw sequences')
+	#summary.append('raw sequences')
 	summary.append(int(len(open(inputfile).readlines())/4))#4 lines per entry in fastq
-	summary.append('trimmed sequences')
+	#summary.append('trimmed sequences')
 	summary.append(int(len(open(trimmedfastq).readlines())/4))
 	#FASTQ.QtoA(trimmedfastq, f'{rootname}.fasta', Ltrim=0, trim=0)
 	if len(open(trimmedfastq).readlines())==0:
@@ -266,14 +266,14 @@ elif inputtype=="fasta":
 	print('inputtype fasta')
 	trimlog=FASTQ.Trim(inputfile,trimmedfasta,barcode, primer5, primer3, trim3, trim5, minimum_read_len,filetype='fasta')
 	logging.info(trimlog)
-	summary.append('raw sequences')
+	#summary.append('raw sequences')
 	with open(inputfile,"r") as fi:
 		sequencecounter=0
 		for ln in fi:
 			if ln.startswith(">"):
 				sequencecounter=+1
 		summary.append(sequencecounter)
-	summary.append('trimmed sequences')
+	#summary.append('trimmed sequences')
 	with open(trimmedfasta,"r") as fi:
 		sequencecounter=0
 		for ln in fi:
@@ -319,6 +319,13 @@ elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-
 	print(bowtieout[1].decode())
 	logging.error(bowtieout[2].decode())
 	print(colorama.Fore.RED+f'{bowtieout[2].decode()}'+colorama.Style.RESET_ALL)
+	if args.append_summary:
+		sam=pysam.AlignmentFile(sam_file, 'r')
+		alignedcount=0
+		for i in sam:
+			alignedcount+=1
+		summary.append(alignedcount)
+		logging.info(f'{alignedcount} reads mapped.')
 
 if inputtype=="sam" or mapreads:
 	readslist, unmapped, message = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,chromNTS=chromNTS,randomize=userandomIS,abundant=abundantfilename)
@@ -373,14 +380,14 @@ if getannotations and len:
 				try:
 					output_writer.writerow([f'{featurenames[i]}(average distance)',average])
 					output_writer.writerow([f'{featurenames[i]}(standard deviation)',standarddev])
-					summary.append(featurenames[i])
-					summary.append('average distanance')
+					#summary.append(featurenames[i])
+					#summary.append('average distanance')
 					summary.append(average)
-					summary.append('st dev')
+					#summary.append('st dev')
 					summary.append(standarddev)
 					for j in range(len(distance)):
 						output_writer.writerow([f'integration events within {distance[j]} bp of {featurenames[i]}',distancebins[j]])
-						summary.append(f'within {distance[j]}bp')
+						#summary.append(f'within {distance[j]}bp')
 						summary.append(distancebins[j])
 				except:
 					logging.error("can't write stats. Maybe there were no sequences")
@@ -394,7 +401,7 @@ if getannotations and len:
 				results, message = annotate.featuremap (annotations[i], ISbamfilename, featurenames=featurenames[i], single=True ,procs=3)
 				if not totalprinted: #featuremap returns total reads, add this line only once as it should be the same for each feature.
 					output_writer.writerow([f'total reads', results[1]])
-					summary.append('reads mapped to genome')
+					#summary.append('reads mapped to genome')
 					summary.append(results[1])
 					totalprinted=True
 				output_writer.writerow([f'reads mapped to {featurenames[i]}', results[0]])

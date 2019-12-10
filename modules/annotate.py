@@ -103,7 +103,7 @@ def closest(queryfilename, refrencefilename, featurename='TSS', position="start"
                 closedistances[j].append(i.count)
     average=statistics.mean(distancelist)
     if len(distancelist) > 1:
-        standarddev=statistics.stdev(distances)
+        standarddev=statistics.stdev(distancelist)
     else:
         standarddev = 0
     if not quiet:

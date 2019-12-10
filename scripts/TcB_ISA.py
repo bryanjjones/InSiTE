@@ -168,6 +168,7 @@ annotationsfile=f'{rootname}_IS_annotations.csv' # file contoining summary of ma
 distancesfile=f'{rootname}_distances.csv' # file containing list of distances of each read to nearest TSS
 logfile=f'{rootname}.log'
 ISbamfilename=f'{rootname}IS.bam'#sam file name for single nt IS mappings
+abundantfilename=f'{rootname}_abundantsort.bam'
 warnings=[]
 #sanity checks:
 if inputtype=="sam":
@@ -320,7 +321,7 @@ elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-
 	print(colorama.Fore.RED+f'{bowtieout[2].decode()}'+colorama.Style.RESET_ALL)
 
 if inputtype=="sam" or mapreads:
-	readslist, unmapped, message = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,chromNTS=chromNTS,randomize=userandomIS)
+	readslist, unmapped, message = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,chromNTS=chromNTS,randomize=userandomIS,abundant=abundantfilename)
 	logging.info(message)
 if write_csv:
 	message=mappedreads.write_csv(readslist,genome_location_csv)

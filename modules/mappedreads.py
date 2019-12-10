@@ -88,7 +88,7 @@ def compress(bamfile,compressedbam=None,adjacent=True): #compressedbam=f'compres
 		compressed.close()
 		#return semicompressed_readslist
 
-def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},randomize=False,expandbam=False): #sorted_file=f'{sam_file}_sorted.bam', 
+def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},randomize=False,expandbam=False, abundant=None): #sorted_file=f'{sam_file}_sorted.bam', 
 #if read_sam_file:
 	message=[]
 	'''
@@ -150,9 +150,9 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},
 	#compress bamfile 
 	if compressreads:
 		compress(ISbamfilename)
-
 	#convert bamfile entries to csv
 	ISbamfile = pysam.AlignmentFile(ISbamfilename,'rb')
+	abundantlist=[]
 	counter=0
 	for entry in ISbamfile:
 		if entry.is_reverse:
@@ -162,7 +162,26 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},
 		chrom=entry.reference_name[3:] #chromosome number of mapping
 		address=entry.pos
 		count=entry.get_tag('IH')
+		if abundant:
+			abundantlist.append((count,entry))
 		readslist.append(read_csv_line([chrom, sense, address,'',count,'','','','','','']))#,chromNTS=chromNTS, userandomIS=random))
+	if abundant: # if abundant filename given, sort reads by most abundant, and write to that file as bam file
+		abundantbamfile = pysam.AlignmentFile(abundant, 'wb', template=ISbamfile)
+		abundantlist.sort(key=lambda tup: tup[0], reverse=True)
+		mostover=round((100*abundantlist[0][0]/entries),3)
+		print(colorama.Style.RESET_ALL+f'Most abundant clone found '+colorama.Fore.YELLOW+f'{abundantlist[0][0]}'+colorama.Style.RESET_ALL+f' times, '+colorama.Fore.YELLOW+f'{mostover}% '+colorama.Style.RESET_ALL+f'of total reads.')
+		message.append(f'Most abundant clone found {abundantlist[0][0]} times, {mostover}% of total reads.')
+		topten=0
+		for i in abundantlist[0:10]:
+			topten+=i[0]
+		toptenpct=round(100*(topten/entries),3)
+		print(colorama.Style.RESET_ALL+f'Top ten most abundant clones found a total of '+colorama.Fore.YELLOW+f'{topten}'+colorama.Style.RESET_ALL+f' times, '+colorama.Fore.YELLOW+f'{toptenpct}% '+colorama.Style.RESET_ALL+f'of total reads.')
+		print(colorama.Fore.GREEN+f'Writing bam file sorted by read count: '+colorama.Style.RESET_ALL+f'{abundantbamfile}')
+		message.append(f'Top ten most abundant clones found a total of {topten} times, {toptenpct}% of total reads.')
+		message.append(f'Writing bam file sorted by read count: {abundant}')
+		for i in abundantlist:
+			abundantbamfile.write(i[1])
+		abundantbamfile.close()
 
 	print(colorama.Fore.YELLOW+f'{entries}'+colorama.Style.RESET_ALL+f' reads in sam file. '+colorama.Fore.YELLOW+f'{len(readslist)}'+colorama.Style.RESET_ALL+f' were mapped to a chromosome, '+colorama.Fore.YELLOW+f'{len(unmapped)} '+colorama.Style.RESET_ALL+f'did not map to a chromosome.')
 	message.append(f'{entries} reads in sam file. {entries-len(unmapped)} were mapped to a chromosome, {len(unmapped)} did not map to a chromosome. count is {counter}')

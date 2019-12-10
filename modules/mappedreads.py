@@ -35,38 +35,78 @@ class read_csv_line(object):
 
 #if compressedreads:
 #compress a sorted readlist by merging identical locations and, if adjacent=True, merging adjacent locations too (merges to location with greatest count)
-def compress(readslist,adjacent=True):
+def compress(bamfile,compressedbam=None,adjacent=True): #compressedbam=f'compressed_{bamfile}',
+	if not compressedbam:
+		compressedbam=bamfile
 	semicompressed_readslist=[]
 	compressed_readslist=[]
-	for i in range(len(readslist)):
+	expanded=pysam.AlignmentFile(bamfile, 'rb')
+	
+	previous=None
+	for entry in expanded: #merge 
+		entry.set_tag('IH',1)
+		if previous:
+			if previous.pos==entry.pos: # if this entry matches the previous one, add one to previous, and ignore this one.
+				count=previous.get_tag('IH')+entry.get_tag('IH')
+				previous.set_tag('IH',count)
+			else: #if previous exists and is different than this one, write prevous to compressed and set this entry to previous.
+				semicompressed_readslist.append(previous)
+				#compressed.write(previous)
+				previous=entry
+		else: 
+			previous=entry
+	semicompressed_readslist.append(previous)#write the last read to compressed
+	'''
 		if i+1<len(readslist) and readslist[i].loc==readslist[i+1].loc and readslist[i].chrom == readslist[i+1].chrom: #if this read isn't the last one and if it's the same as the next one
 			readslist[i+1].totalseqs=readslist[i+1].totalseqs+readslist[i].totalseqs #if they are the same chromosome and locus, add to the total
 		else:
 			semicompressed_readslist.append(readslist[i]) #if it's different than the next one, add it to the list (with the total count)
+	'''
 	#adjust loc +/- 1 to account for indels
+	compressed=pysam.AlignmentFile(compressedbam, 'wb', template=expanded)
+	expanded.close()
 	if adjacent:
+		compressedcount=0
 		for i in range(len(semicompressed_readslist)):
-			if i+1<len(semicompressed_readslist) and semicompressed_readslist[i].loc==(semicompressed_readslist[i+1].loc-1) and semicompressed_readslist[i].chrom == semicompressed_readslist[i+1].chrom: #if this read isn't the last one and if it's the same as the next one
-				print(colorama.Style.RESET_ALL + f'merging adjacent read locations. read '+colorama.Fore.YELLOW + f'{i}'+colorama.Style.RESET_ALL + ', locations '+colorama.Fore.YELLOW + f'{semicompressed_readslist[i].loc} '+colorama.Style.RESET_ALL + ' and '+colorama.Fore.YELLOW + f'{semicompressed_readslist[i+1].loc}.')
-				if semicompressed_readslist[i].totalseqs>semicompressed_readslist[i+1].totalseqs:
-					semicompressed_readslist[i+1].loc=semicompressed_readslist[i].loc #if read i has more counts than i+1, then change i+1's location to i
-				semicompressed_readslist[i+1].totalseqs=semicompressed_readslist[i+1].totalseqs+semicompressed_readslist[i].totalseqs #if they are the same chromosome and locus, add to the 
+			if i+1<len(semicompressed_readslist) and semicompressed_readslist[i].pos==(semicompressed_readslist[i+1].pos-1) and semicompressed_readslist[i].reference_name == semicompressed_readslist[i+1].reference_name: #if this read isn't the last one and if it's the same as the next one
+				print(colorama.Style.RESET_ALL + f'merging adjacent read locations. read '+colorama.Fore.YELLOW + f'{i}'+colorama.Style.RESET_ALL + ', locations '+colorama.Fore.YELLOW + f'{semicompressed_readslist[i].pos} '+colorama.Style.RESET_ALL + ' and '+colorama.Fore.YELLOW + f'{semicompressed_readslist[i+1].pos}.')
+				if semicompressed_readslist[i].get_tag('IH')>semicompressed_readslist[i+1].get_tag('IH'):
+					semicompressed_readslist[i+1].pos=semicompressed_readslist[i].pos #if read i has more counts than i+1, then change i+1's location to i
+				summedreads=semicompressed_readslist[i+1].get_tag('IH')+semicompressed_readslist[i].get_tag('IH') #if they are the same chromosome and locus, add to the 
+				semicompressed_readslist[i+1].set_tag('IH',summedreads)
 			else:
-				print(colorama.Style.RESET_ALL + f'adding line '+colorama.Fore.YELLOW + f'{i}'+colorama.Style.RESET_ALL + ' to compressed readslist for addition to csv',end="\r")
-				compressed_readslist.append(semicompressed_readslist[i]) #if it's different than the next one, add it to the list (with the total count)
-		return compressed_readslist
+				print(colorama.Style.RESET_ALL + f'adding line '+colorama.Fore.YELLOW + f'{i}'+colorama.Style.RESET_ALL + f' to compressed {compressedbam}',end="\r")
+				compressedcount+=1
+				compressed.write(semicompressed_readslist[i])
+				#compressed_readslist.append(semicompressed_readslist[i]) #if it's different than the next one, add it to the list (with the total count)
+		print(f'{compressedcount} sequences written to {compressedbam}')
+		compressed.close()
+		#return compressed_readslist
 	else:
-		return semicompressed_readslist
+		for i in semicompressed_readslist:
+			compressed.write(i)
+		compressed.close()
+		#return semicompressed_readslist
 
-def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},randomize=False):
+def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},randomize=False,expandbam=False): #sorted_file=f'{sam_file}_sorted.bam', 
 #if read_sam_file:
 	message=[]
-	samfile = pysam.AlignmentFile(sam_file, "r")
+	'''
+	#convert sam file into bam file
+	insam=pysam.AlignmentFile(sam_file,"r")
+	outbam=pysam.AlignmentFile(sorted_file, 'wb', template=insam)
+	for s in insam:
+		outbam.write(s)
+	#sort sequences in newly created bam file
+	pysam.sort("-o",sorted_file,sorted_file)
+	samfile = pysam.AlignmentFile(sorted_file, "rb")
+	'''
+	samfile = pysam.AlignmentFile(sam_file, 'r')
 	ISbamfile = pysam.AlignmentFile(ISbamfilename,'wb',template=samfile)
 	print(colorama.Fore.GREEN + f'Reading sam file: '+colorama.Style.RESET_ALL+f' {sam_file}')
 	message.append(f'Reading sam file: '+f' {sam_file}')
 	if randomize:
-		print(colorama.Fore.ORANGE + f'Randomizing sequence locations.'+colorama.Style.RESET_ALL)
+		print(colorama.Fore.MAGENTA + f'Randomizing sequence locations.'+colorama.Style.RESET_ALL)
 		message.append(f'Randomizing sequence locations.')
 	print(colorama.Fore.GREEN + f'Writing bam file: '+colorama.Style.RESET_ALL+f' {ISbamfilename}')
 	message.append(f'Writing bam file: '+f' {ISbamfilename}')
@@ -74,10 +114,11 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},
 	recordlist=[]
 	unmapped=[]
 	entries=0
+	#adjust entries in samfile to be to singl mapped nt and only mapped reads
+	
 	for entry in samfile:
 		entries+=1
 		if entry.reference_name and (entry.reference_name[3:] in chromIDS.keys()): #check if read has a refrence to a chromosome, otherwise ignore (i.e. unmapped reads)
-			chrom=entry.reference_name[3:] #chromosome number of mapping
 			if entry.is_reverse:
 				sense="-"
 				address=entry.get_reference_positions()[-1] #chromosome position of mapping
@@ -86,6 +127,7 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},
 				entry.pos=address
 				entry.query_sequence=entry.query_sequence[-1:]
 				entry.query_qualities = q[-1:]
+
 			else:
 				sense="+"
 				address=entry.get_reference_positions()[1] #chromosome position of mapping
@@ -95,17 +137,40 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},
 				entry.query_sequence=entry.query_sequence[:1]
 				entry.query_qualities = q[:1]
 			if randomize:
-				entry.pos=address=random.randrange(int(chromNTS[str(entry.reference_name[3:])]))
+				entry.pos=random.randrange(int(chromNTS[str(entry.reference_name[3:])]))
 			ISbamfile.write(entry)#add entry to ISbamfile with 1 nt sequence
-			readslist.append(read_csv_line([chrom, sense, address,'',1,'','','','','','']))#,chromNTS=chromNTS, userandomIS=random))
+			#recordlist.append(entry)
 		else:
 			unmapped.append(entry)
-	print(colorama.Fore.YELLOW+f'{entries}'+colorama.Style.RESET_ALL+f' reads in sam file. '+colorama.Fore.YELLOW+f'{len(readslist)}'+colorama.Style.RESET_ALL+f' were mapped to a chromosome, '+colorama.Fore.YELLOW+f'{len(unmapped)} '+colorama.Style.RESET_ALL+f'did not map to a chromosome.')
-	message.append(f'{entries} reads in sam file. {len(readslist)} were mapped to a chromosome, {len(unmapped)} did not map to a chromosome.')
-	readslist=sorted(readslist, key=attrgetter('chrom', 'loc')) #sort the list by chromosome# and location
-	if compressreads:
-		readslist=compress(readslist)
 	samfile.close()
+	ISbamfile.close()
+	#sort those bamfile entries by entry.refrence_name and entry.pos
+	pysam.sort("-o",ISbamfilename,ISbamfilename)
+
+	#compress bamfile 
+	if compressreads:
+		compress(ISbamfilename)
+
+	#convert bamfile entries to csv
+	ISbamfile = pysam.AlignmentFile(ISbamfilename,'rb')
+	counter=0
+	for entry in ISbamfile:
+		if entry.is_reverse:
+			sense="-"
+		else:
+			sense="+"
+		chrom=entry.reference_name[3:] #chromosome number of mapping
+		address=entry.pos
+		count=entry.get_tag('IH')
+		readslist.append(read_csv_line([chrom, sense, address,'',count,'','','','','','']))#,chromNTS=chromNTS, userandomIS=random))
+
+	print(colorama.Fore.YELLOW+f'{entries}'+colorama.Style.RESET_ALL+f' reads in sam file. '+colorama.Fore.YELLOW+f'{len(readslist)}'+colorama.Style.RESET_ALL+f' were mapped to a chromosome, '+colorama.Fore.YELLOW+f'{len(unmapped)} '+colorama.Style.RESET_ALL+f'did not map to a chromosome.')
+	message.append(f'{entries} reads in sam file. {entries-len(unmapped)} were mapped to a chromosome, {len(unmapped)} did not map to a chromosome. count is {counter}')
+	#readslist=sorted(readslist, key=attrgetter('chrom', 'loc')) #sort the list by chromosome# and location
+	
+	#if not expandbam:
+	#	for record in recordlist:
+	#		ISbamfile.write(read)
 	ISbamfile.close()
 	return readslist, unmapped, "\n".join(message) #ISbamfile
 #if write_csv:

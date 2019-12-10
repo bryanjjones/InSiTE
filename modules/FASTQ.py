@@ -32,24 +32,26 @@ def QtoA(inputfile, outputfile, Ltrim=0, trim=0):
 	print(colorama.Fore.CYAN+f'writing {outputfile}'+colorama.Style.RESET_ALL)
 	Bio.SeqIO.write(seqs, outputfile, "fasta") #"./inprocess/"+
 	return seqs
-def Trim(inputfile,outputfile,barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='CCTAACTGCTGTGCCACT', trim3=16, trim5=21, minlen=10):
+def Trim(inputfile,outputfile,barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='CCTAACTGCTGTGCCACT', trim3=16, trim5=21, minlen=10, filetype='fastq'):
 	message=[]
 	cutcommand=[]
 	tempfiles=[]
 	if trim3>0 or trim5>0:
-		cutcommand.append(f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 --discard-untrimmed -o ./inprocess/temptrimmed.fastq ./{inputfile}')
-		tempfiles.append('./inprocess/temptrimmed.fastq')
+		cutcommand.append(f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 --discard-untrimmed -o ./inprocess/temptrimmed.{filetype} ./{inputfile}')
+		tempfiles.append(f'./inprocess/temptrimmed.{filetype}')
 		if trim3>0 and trim5>0: #both trim3 and 5
-			cutcommand.append(f'{cutadaptlocation} -u -{trim3} -j 0 -o ./inprocess/temptrimmed1.fastq ./inprocess/temptrimmed.fastq')
-			cutcommand.append(f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.fastq')
-			tempfiles.append('./inprocess/temptrimmed1.fastq')
+			cutcommand.append(f'{cutadaptlocation} -u -{trim3} -j 0 -o ./inprocess/temptrimmed1.{filetype} ./inprocess/temptrimmed.{filetype}')
+			cutcommand.append(f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.{filetype}')
+			tempfiles.append(f'./inprocess/temptrimmed1.{filetype}')
 		elif trim3>0: #only trim3
-			cutcommand.append(f'{cutadaptlocation} -u -{trim3} -j 0 -m {minlen} -o {outputfile}  ./inprocess/temptrimmed.fastq')
+			cutcommand.append(f'{cutadaptlocation} -u -{trim3} -j 0 -m {minlen} -o {outputfile}  ./inprocess/temptrimmed.{filetype}')
 		else: #only trim5
-			cutcommand.append(f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.fastq')
-	else: 
+			cutcommand.append(f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.{filetype}')
+	elif len(primer3)>0 or len(primer5)>0 or len(barcode5)>0: 
 		cutcommand.append(f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 -m {minlen} --discard-untrimmed -o {outputfile} ./{inputfile}')
-	
+	else: #no primers, adapters, or trimming
+		cutcommand.append(f'{cutadaptlocation} -j 0 -m {minlen} -o {outputfile} ./{inputfile}')
+
 	print(f'cutting adapters/primers/barcods from reads using cutadapt. Writting output to {outputfile}')
 	for command in cutcommand:		
 		print(colorama.Fore.CYAN +f'{command}'+colorama.Style.RESET_ALL)
@@ -110,130 +112,3 @@ if __name__ == "__main__":
 	for i in range(len(filelist)):
 		QtoA(filelist[i],outputfiles[i])
 	exit()
-'''
-#Various functions:
-#getseqs=0#1#download sequences from entrez
-#writeFASTA=0#1#write a fasta file of all sequences around IS
-writelogo=0#1#create a logo image of consensus sequence # requires getseqs and writeFASTA to be on
-writevepfile=0#write a vep file to use with vep, either online or by setting getannotations to 1
-getannotations=1#1 # uses VEP to get anotations for insertion sites
-userandomIS=0#0 #useful for generating a random control data set chromosome matched to query set.
-
-window=50 #window on either side of indicated nt location to return
-#specified file names
-inputfile='IS_data.csv'#'IS_data.csv'
-outputfile="InsertionSequences.fasta"
-outputVEPfile="rand_VEPfile.csv"
-logofile="IS_logo.svg"
-annotationsfile='rand_IS_annotations.csv'
-
-veplocation = './ensembl-vep/vep'
-weblogolocation = 'weblogo' #in PATH
-Bio.Entrez.email = "bryan@bmogen.com"     # Always tell NCBI who you are
-Bio.Entrez.api_key = "679368bc3fef47bb440fb743c889befe4e09" #bryan's personal NCBI key (allows faster requests of their server)
-#maxtries=5
-reads=[]
-recordlist=[]        
-chromIDS={}
-chromNTS={}
-
-#make a dictionary of chromosome names and ID #s usich chromosomes.csv, which is the table copied from https://www.ncbi.nlm.nih.gov/genome?term=human&cmd=DetailsSearch
-with open('chromosomes.csv') as csv_file:
-	csv_reader = csv.reader(csv_file, delimiter=",")
-	line_count=0
-	for row in csv_reader:
-		name=row[1]
-		ID=row[2]
-		nts=row[4]
-		print(f'chromosome {name} is called {ID} and has {nts} nucleotides')
-		chromIDS[name]=ID
-		chromNTS[name]=nts
-if userandomIS:
-	random.seed(a=None, version=2)
-#parse a row from the read file and pull the sequence
-class read(object):
-	def __init__(self, row):
-		tries = 1
-		self.chrom=int(row[0])
-		self.sense=row[1]
-		if row[1]=="+":
-			self.sensenum=1
-		elif row[1]=="-":
-			self.sensenum=2
-		if userandomIS: #if random IS used, per "read" use a random number for insertion site
-			self.loc=random.randrange(int(chromNTS[str(self.chrom)])) # random int returned in the range of the given chromosome range
-		else: #if not random, use given values
-			self.loc=int(row[2])
-		self.gene=row[3]
-		self.totalseqs=row[4]
-		self.total=row[5]
-		self.plasmid=row[6]
-		self.sample1=row[7]
-		self.sample2=row[8]
-		self.sample3=row[9]
-		self.sample4=row[10]
-		if getseqs: #if get sequences, fetch sequence centered on given location, with a window on either side
-			handle = Bio.Entrez.efetch(db="nucleotide", #fetches the specified sequence as a fasta
-				id=chromIDS[self.chrom], #id for indicated chromosome from refrence genome assembly
-				rettype="fasta", #format
-				strand=self.sensenum, #which strand
-				seq_start=str(self.loc-window), #range of sequence to return
-				seq_stop=str(self.loc+window))
-			self.record = Bio.SeqIO.read(handle, "fasta") #reads the returned fasta into a sequence object
-			handle.close()#close efetch 
-			self.sequence=self.record.seq #adds the sequence property as a string 
-		else: #if not getting sequences, just put empt bits.
-			self.record=None
-			self.sequence="-"
-if getseqs or writeFASTA or writevepfile 
-	print(f'reading data from {inputfile}')
-	with open(inputfile) as csv_file: #open file
-		csv_reader = csv.reader(csv_file, delimiter=',') #read lines
-		line_count = 0
-		for row in csv_reader:
-			if line_count < 4:#first 4 lines are headders
-				print(f'Column names are {", ".join(row)}')
-				line_count += 1
-			else: #read data from each line
-				thisrow=read(row)
-				reads.append(thisrow)
-				recordlist.append(thisrow.record)
-				print(f'\t {line_count} read on chromosome {thisrow.chrom} with {thisrow.sense} sense at location {thisrow.loc}. and has sequence {thisrow.sequence}')
-				line_count += 1 
-		print(f'Processed {line_count} lines.')
-
-if writeFASTA:#write FASTA formatted file with returned sequences
-	print(f'writting fasta file: {outputfile}')
-	Bio.SeqIO.write(recordlist, outputfile, "fasta")
-	if writelogo: #dependant on having sequences, optional to make logo plot
-		weblogocommand=f'{weblogolocation} -f {outputfile} -D fasta -o {logofile} -F svg -A dna -F png --resolution 600 -s large -c clasic -i '+str(int(-1*window)) #-l [lower bound] -u [upper bound]
-		print('writting logo')
-		print(weblogocommand)
-		logocommand=runbin.Command(weblogocommand)
-		logoout=logocommand.run(timeout=1800) 
-
-if writevepfile:
-	reads = sorted(reads, key = lambda x: (x.chrom, x.loc))
-	print(f'writing file for VEP analysis: {outputVEPfile}')
-	with open(outputVEPfile, 'w', newline='') as formatted_csv_file: #writting file formatted for VEP analysis
-		csv_writer = csv.writer(formatted_csv_file, delimiter='\t') #tab delimited csv file
-		for entry in reads:
-			if entry.chrom == 23:
-				entry.chrom ="X"
-			elif entry.chrom == 24:
-				entry.chrom ="Y"
-			csv_writer.writerow([entry.chrom, str(entry.loc+1), entry.loc, "-/A", entry.sense])
-
-if getannotations:
-	vepcommand=f'{veplocation} -i {outputVEPfile} -o {annotationsfile} --buffer_size 100000 --merged --format "ensembl" --cache --nearest gene --distance 1 --offline --use_given_ref --fork 4 --pick' #runs vep using "--merged" ensembl and refseq genomes (what i currently have "--cached" on my machine). return the "--nearest gene". --distance from query to look for genes. maybe add --symbol --protein --ccds. Maybe add back: --numbers --domains --biotype --hgvs add --merged --gencode_basci
-	print('running VEP analysis to annotate genomic positions using ensembl vep. Writting output to {annotationsfile} and {annotationsfile}_summary.html')
-	print(vepcommand)
-	vep=runbin.Command(vepcommand)
-	vepout=vep.run(timeout=20000)
-	print(vepout[1]) #STDOUT
-	print(vepout[2]) #ERRORS
-
-#Do I need this or will teh VEP report do that for me? read consequence, and classify simply (intron/exon/intragenic/UTR/regulatory)
-print(f'Completed all tasks. Exiting.')
-exit()
-'''

@@ -81,10 +81,13 @@ def startsite (feature):
     return feature
 
 #returns list of distances and BedTool object containing list of distances between each feature in a given queryfile (bam) and the closest feature in the given refrence file. given featurename used for labeling output. If position=start, distance to startting nt of refrence features will be used to calculate distance.
-def closest(queryfilename, refrencefilename, featurename=['TSS'], position="start",limit=1000,quiet=False):
+def closest(queryfilename, refrencefilename, featurename='TSS', position="start", distances=[1000],quiet=False):
     message = []
-    distances=[]
+    distancelist=[]
     closedistances=[]
+    distancebins=[]
+    for i in range(len(distances)):
+        closedistances.append([])
     query=pybedtools.BedTool(queryfilename).bam_to_bed().sort()
     refrence=pybedtools.BedTool(refrencefilename).sort()
     #if position is start, make a duplicate refrence site with only startsite nt
@@ -92,24 +95,27 @@ def closest(queryfilename, refrencefilename, featurename=['TSS'], position="star
         refrence=refrence.each(startsite).sort().saveas()
     #transcripts=pybedtools.BedTool('./refrence_datasets/annotations/gencode.v32.transcript.gtf')
     #query=pybedtools.BedTool('./05IS.bam')
-    b=query.closest(refrence,d=True)
+    b=query.closest(refrence,d=True,t="first")
     for i in b: #make list of distances
-        distances.append(i.count)
-        if i.count<=limit:
-            closedistances.append(i.count)
-    average=statistics.mean(distances)
-    if len(distances) > 1:
+        distancelist.append(i.count)
+        for j in range(len(distances)):
+            if i.count<=distances[j]:
+                closedistances[j].append(i.count)
+    average=statistics.mean(distancelist)
+    if len(distancelist) > 1:
         standarddev=statistics.stdev(distances)
     else:
         standarddev = 0
     if not quiet:
         print(colorama.Style.RESET_ALL+f'average distance to '+colorama.Fore.YELLOW+f'{featurename}\t\t\t{round(average):,}\t'+colorama.Style.RESET_ALL+f'bp')
         print(colorama.Style.RESET_ALL+f'standard deviation distance to '+colorama.Fore.YELLOW+f'{featurename}\t{round(standarddev):,}\t'+colorama.Style.RESET_ALL+f'bp')
-        print(colorama.Style.RESET_ALL+f'sites within '+colorama.Fore.YELLOW+f'{limit}'+colorama.Style.RESET_ALL+f' bp of '+colorama.Fore.YELLOW+f'{featurename}\t\t{len(closedistances):,}'+colorama.Style.RESET_ALL)
         message.append(f'average distance to '+f'{featurename}\t\t\t{round(average):,}\t'+f'bp')
         message.append(f'standard deviation distance to '+f'{featurename}\t{round(standarddev):,}\t'+f'bp')
-        message.append(f'sites within '+f'{limit}'+f' bp of '+f'{featurename}\t\t{len(closedistances):,}')
-    return distances, average, standarddev, len(closedistances), b, "\n".join(message)
+    for i in range(len(closedistances)):
+        distancebins.append(len(closedistances[i]))
+        print(colorama.Style.RESET_ALL+f'sites within '+colorama.Fore.YELLOW+f'{distances[i]}'+colorama.Style.RESET_ALL+f' bp of '+colorama.Fore.YELLOW+f'{featurename}\t\t{len(closedistances[i]):,}'+colorama.Style.RESET_ALL)
+        message.append(f'sites within '+f'{distances[i]}'+f' bp of '+f'{featurename}\t\t{len(closedistances[i]):,}')
+    return distancelist, average, standarddev, distancebins, b, "\n".join(message)
 
 #main function to map features in IS bam file to feature file (gff/gtf/bed). if single=Falso, map to given featurenames list in feature file. if single=True, all features in feature file are treated as the target feature. If save=True, each subset of features is saved as new file.
 def featuremap (gff, bam, featurenames=['intron', 'exon'],single=False,save=False,procs=3):   

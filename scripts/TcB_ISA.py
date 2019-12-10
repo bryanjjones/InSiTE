@@ -41,7 +41,8 @@ trim5=21 #additional (non-genomic) nts to trim off of 3' end of reads
 trim3=16 #additional (non-genomic) nts to trim off of 5' end of reads (starts with TA)
 featurenames=['intron', 'exon','codingexon','transcript','TSS'] #feature names found in feature files to map reads to
 featuredist=[False,False,False,False,True]# weather to map distance of each read, or only whether reads overlap with feature
-distance=1000 # distance in bp to be considered close to feature
+distance=[1000,2000,4000,8000,16000,32000,64000] # distance in bp to be considered close to feature
+
 
 #outputs:
 write_csv=1 # write csv (only relevant if reading from sam file)
@@ -57,21 +58,21 @@ bowtieindex = './refrence_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405
 weblogolocation = 'weblogo' #in PATH
 twobitlocation = './scripts/TwoBitToFa'
 twobitgenomelocation='./refrence_datasets/genomes/GRCh38.2bit'
-annotations=['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcripts.gtf','./refrence_datasets/annotations/gencode.v32.transcripts.gtf'] #['./refrence_datasets/annotations/refseq.introns.bed','./refrence_datasets/annotations/refseq.exons.bed','./refrence_datasets/annotations/refseq.codingexons.bed','./refrence_datasets/annotations/refseq.transcripts.bed','./refrence_datasets/annotations/refseq.transcripts.bed'] annotations file in gff, gtf, or bed format,
+annotations=['./refrence_datasets/annotations/refseq.introns.bed','./refrence_datasets/annotations/refseq.exons.bed','./refrence_datasets/annotations/refseq.codingexons.bed','./refrence_datasets/annotations/refseq.transcripts.bed','./refrence_datasets/annotations/refseq.transcripts.bed'] #['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcripts.gtf','./refrence_datasets/annotations/gencode.v32.transcripts.gtf'] #['./refrence_datasets/annotations/refseq.introns.bed','./refrence_datasets/annotations/refseq.exons.bed','./refrence_datasets/annotations/refseq.codingexons.bed','./refrence_datasets/annotations/refseq.transcripts.bed','./refrence_datasets/annotations/refseq.transcripts.bed'] annotations file in gff, gtf, or bed format,
 if __name__ == "__main__":
 
 	ap = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
-	                             usage=__doc__)
+								 usage=__doc__)
 	ap.add_argument('-q', '--fastq', help='fastq input file')
 	ap.add_argument('-r', '--rand_is', default=False, action='store_true', 
-	                help='use random integration sites matched to given query set instead of actual query set')
+					help='use random integration sites matched to given query set instead of actual query set')
 	ap.add_argument('-n', '--rand_nt', default=False, action='store_true',
-	                help='use random sequences for mapping')
+					help='use random sequences for mapping')
 	ap.add_argument('-c','--csv', help='csv input file')
 	ap.add_argument('-a','--fasta', help='fasta input file')
 	ap.add_argument('-s','--sam', help='sam/bam input file')
 	ap.add_argument('--no_seqs', default=False, action='store_true',
-	                help='do not get sequences from either entrez or local TwoBit genome around locations indicated by genome_location_csv')
+					help='do not get sequences from either entrez or local TwoBit genome around locations indicated by genome_location_csv')
 	ap.add_argument('-z', '--compress_reads', action='store_true', help='compress duplicate reads and reads shifted +/- 1nt, number of reads are compressed in csv, fasta, and mapping outputs')
 	ap.add_argument('--no_annotate', default=False, action='store_true', help='do not map insertion sites to genome annotations')
 	ap.add_argument('--barcode', default='ATCTGCGACG', help=' barcode sequence to trim off of reads')
@@ -86,7 +87,7 @@ if __name__ == "__main__":
 	ap.add_argument('--trim3', default=16, type=int, help="additional (non-genomic) nts to trim off of 5' end of reads (starts with TA)")
 	ap.add_argument('--feature', action='append', help='feature names found in feature files to map reads to')#['intron', 'exon','codingexon','transcript','TSS'] #feature names found in feature files to map reads to
 	ap.add_argument('--dist', action='append', help='weather to map distance of each read, or only whether reads overlap with feature. same number of distance variables must be given as features.')
-	ap.add_argument('--close', default=1000, type=int, help='distance in bp to be considered close to feature')
+	ap.add_argument('--close', action='append', type=int, help='distance in bp to be considered close to feature')
 	ap.add_argument('--chromosome_ids', default='./refrence_datasets/chromosomes.csv')
 	ap.add_argument('--bowtielocation', default = 'bowtie2')
 	ap.add_argument('--bowtieindex', default = './refrence_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index')
@@ -140,7 +141,8 @@ if __name__ == "__main__":
 		featurenames = args.feature
 		featuredist = args.dist
 		annotations = args.annotations
-	distance = args.close
+	if args.close:
+		distance = args.close
 	chromosome_ids = args.chromosome_ids
 	bowtielocation = args.bowtielocation
 	bowtieindex = args.bowtieindex
@@ -157,7 +159,8 @@ rootname=os.path.splitext(inputfile)[0]
 #output file names
 sam_file=f'{rootname}.sam'#,'02-wind20-70.sam','03-wind20-70.sam','04-wind20-70.sam','05-wind20-70.sam','06-wind20-70.sam','07-wind20-70.sam','08-wind20-70.sam','09-wind20-70.sam','10-wind20-70.sam','11-wind20-70.sam','12-wind20-70.sam','13-wind20-70.sam',]
 genome_location_csv=f'{rootname}_IS_mappings.csv'#'IS_data.csv'
-trimmedfastq=f'{rootname}_trimmed.fastq' # fastq file with adapters/primers/barcodes trimmed off with cutadapt
+trimmedfastq=f'{rootname}_trimmed.fastq' # fastq file with adapters/primers/barcodes trimmed off with cutadapt and short sequences removed
+trimmedfasta=f'{rootname}_trimmed.fasta' # fasta file with adapters/primers/barcodes trimmed off with cutadapt and short sequences removed
 FASTAfile=f'{rootname}_retrieved_2bit.fasta'#output fasta file containing sequences surrounding mapped insertion site
 #outputVEPfile=f"{rootname}_VEPfile.csv" #VEP file containing mapped locations of insertions in VEP format so VEP can provide annotations
 logofile=f"{rootname}IS_logo.svg" # logo file showing consensus integration site in logo format
@@ -199,7 +202,7 @@ if getannotations and not len(annotations)==len(featurenames)==len(featuredist):
 	sys.exit(colorama.Fore.RED + "If getting annotations, length of annotation files, feature names, and feature distance must be the same")
 summary=[rootname,barcode]
 reads=[]
-recordlist=[]        
+recordlist=[]		
 chromIDS={}
 chromNTS={}
 programstart = time.time()
@@ -227,8 +230,9 @@ if sequencesource =='LOCAL':
 else:
 	genome=None
 
-#trim primers and adapters from raw fastqreads, return trimmed "genomic" sequences in fasta format.
+#trim primers and adapters and filter for length from raw fastqreads, return trimmed "genomic" sequences in fasta format.
 if inputtype=="fastq":
+	print('input type fastq')
 	trimlog=FASTQ.Trim(inputfile,trimmedfastq,barcode, primer5, primer3, trim3, trim5, minimum_read_len)
 	logging.info(trimlog)
 	summary.append('raw sequences')
@@ -244,6 +248,46 @@ if inputtype=="fastq":
 		logging.info(trimlog)
 	#run bowtie using trimmed fastq and quality scores (--phred33)
 	bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -U {trimmedfastq} -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
+	print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
+	print(bowtiecommand)
+	logging.info(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
+	logging.info(bowtiecommand)
+	bowtie=runbin.Command(bowtiecommand)
+	bowtieout=bowtie.run(timeout=20000)
+	bowtieout[1]
+	print(bowtieout[1].decode())
+	print(bowtieout[2].decode())	
+	logging.info(bowtieout[1].decode())
+	logging.info(bowtieout[2].decode())	
+
+#trim priers and adapters and filter for length from fasta reads, return trimmed "genomic" sequences in fasta format.
+elif inputtype=="fasta":
+	print('inputtype fasta')
+	trimlog=FASTQ.Trim(inputfile,trimmedfasta,barcode, primer5, primer3, trim3, trim5, minimum_read_len,filetype='fasta')
+	logging.info(trimlog)
+	summary.append('raw sequences')
+	with open(inputfile,"r") as fi:
+		sequencecounter=0
+		for ln in fi:
+			if ln.startswith(">"):
+				sequencecounter=+1
+		summary.append(sequencecounter)
+	summary.append('trimmed sequences')
+	with open(trimmedfasta,"r") as fi:
+		sequencecounter=0
+		for ln in fi:
+			if ln.startswith(">"):
+				sequencecounter=+1
+		summary.append(sequencecounter)
+	#FASTQ.QtoA(trimmedfastq, f'{rootname}.fasta', Ltrim=0, trim=0)
+	if len(open(trimmedfasta).readlines())==0:
+		logging.critical(f'No sequences left after trimming. Exiting')
+		sys.exit(colorama.Fore.RED+f'No sequences left after trimming. Exiting'+colorama.Style.RESET_ALL)
+	if userandomSEQS: #replace all real reads with random NT
+		trimlog=FASTQ.randomize(trimmedfastq,format='fasta')
+		logging.info(trimlog)
+	#run bowtie using trimmed fastq and quality scores (--phred33)
+	bowtiecommand=f'{bowtielocation} --phred33 -p 4 -f -x {bowtieindex} -U {trimmedfasta} -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
 	print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
 	print(bowtiecommand)
 	logging.info(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
@@ -323,19 +367,20 @@ if getannotations and len:
 			if featuredist[i]:
 				print(colorama.Style.RESET_ALL+f'mapping insertion site distances to '+colorama.Fore.YELLOW+f'{featurenames[i]}'+colorama.Style.RESET_ALL+f' in '+colorama.Fore.YELLOW+f'{annotations[i]}'+colorama.Style.RESET_ALL)
 				logging.info(f'mapping insertion site distances to '+f'{featurenames[i]}'+f' in '+f'{annotations[i]}')
-				distances, average, standarddev, close, b , message= annotate.closest (ISbamfilename,annotations[i],featurename=featurenames[i],limit=distance,position="start")
+				distances, average, standarddev, distancebins, b , message= annotate.closest (ISbamfilename,annotations[i],featurename=featurenames[i],distances=distance,position="start")
 				logging.info(message)
 				try:
 					output_writer.writerow([f'{featurenames[i]}(average distance)',average])
 					output_writer.writerow([f'{featurenames[i]}(standard deviation)',standarddev])
-					output_writer.writerow([f'integration events within {distance} bp of {featurenames[i]}',close])
 					summary.append(featurenames[i])
 					summary.append('average distanance')
 					summary.append(average)
 					summary.append('st dev')
 					summary.append(standarddev)
-					summary.append(f'within {distance}bp')
-					summary.append(close)
+					for j in range(len(distance)):
+						output_writer.writerow([f'integration events within {distance[j]} bp of {featurenames[i]}',distancebins[j]])
+						summary.append(f'within {distance[j]}bp')
+						summary.append(distancebins[j])
 				except:
 					logging.error("can't write stats. Maybe there were no sequences")
 					print("can't write stats. Maybe there were no sequences")

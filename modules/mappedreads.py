@@ -69,7 +69,7 @@ def compress(bamfile,compressedbam=None,adjacent=True): #compressedbam=f'compres
 		compressedcount=0
 		for i in range(len(semicompressed_readslist)):
 			if i+1<len(semicompressed_readslist) and semicompressed_readslist[i].pos==(semicompressed_readslist[i+1].pos-1) and semicompressed_readslist[i].reference_name == semicompressed_readslist[i+1].reference_name: #if this read isn't the last one and if it's the same as the next one
-				print(colorama.Style.RESET_ALL + f'merging adjacent read locations. read '+colorama.Fore.YELLOW + f'{i}'+colorama.Style.RESET_ALL + ', locations '+colorama.Fore.YELLOW + f'{semicompressed_readslist[i].pos} '+colorama.Style.RESET_ALL + ' and '+colorama.Fore.YELLOW + f'{semicompressed_readslist[i+1].pos}.')
+				print(colorama.Style.RESET_ALL + f'merging adjacent read locations. read '+colorama.Fore.YELLOW + f'{i}'+colorama.Style.RESET_ALL + ', locations '+colorama.Fore.YELLOW + f'{semicompressed_readslist[i].pos} '+colorama.Style.RESET_ALL + ' and '+colorama.Fore.YELLOW + f'{semicompressed_readslist[i+1].pos}.',end="\r")
 				if semicompressed_readslist[i].get_tag('IH')>semicompressed_readslist[i+1].get_tag('IH'):
 					semicompressed_readslist[i+1].pos=semicompressed_readslist[i].pos #if read i has more counts than i+1, then change i+1's location to i
 				summedreads=semicompressed_readslist[i+1].get_tag('IH')+semicompressed_readslist[i].get_tag('IH') #if they are the same chromosome and locus, add to the 
@@ -176,7 +176,7 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},
 			topten+=i[0]
 		toptenpct=round(100*(topten/entries),3)
 		print(colorama.Style.RESET_ALL+f'Top ten most abundant clones found a total of '+colorama.Fore.YELLOW+f'{topten}'+colorama.Style.RESET_ALL+f' times, '+colorama.Fore.YELLOW+f'{toptenpct}% '+colorama.Style.RESET_ALL+f'of total reads.')
-		print(colorama.Fore.GREEN+f'Writing bam file sorted by read count: '+colorama.Style.RESET_ALL+f'{abundantbamfile}')
+		print(colorama.Fore.GREEN+f'Writing bam file sorted by read count: '+colorama.Style.RESET_ALL+f'{abundant}')
 		message.append(f'Top ten most abundant clones found a total of {topten} times, {toptenpct}% of total reads.')
 		message.append(f'Writing bam file sorted by read count: {abundant}')
 		for i in abundantlist:

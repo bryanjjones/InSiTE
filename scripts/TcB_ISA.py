@@ -218,7 +218,7 @@ with open(chromosome_ids) as csv_file:
 		name=row[1]
 		ID=row[2]
 		nts=row[4]
-		print(f'chromosome ' + colorama.Fore.YELLOW + f'{name}'+colorama.Style.RESET_ALL + ' is called ' + colorama.Fore.YELLOW + f'{ID}'+colorama.Style.RESET_ALL + ' and has '+ colorama.Fore.YELLOW + f'{nts}'+colorama.Style.RESET_ALL + ' nucleotides')
+		#print(f'chromosome ' + colorama.Fore.YELLOW + f'{name}'+colorama.Style.RESET_ALL + ' is called ' + colorama.Fore.YELLOW + f'{ID}'+colorama.Style.RESET_ALL + ' and has '+ colorama.Fore.YELLOW + f'{nts}'+colorama.Style.RESET_ALL + ' nucleotides')
 		chromIDS[name]=ID
 		chromNTS[name]=nts
 
@@ -405,7 +405,7 @@ if getannotations and len:
 					summary.append(results[1])
 					totalprinted=True
 				output_writer.writerow([f'reads mapped to {featurenames[i]}', results[0]])
-				summary.append(featurenames[i])
+				#summary.append(featurenames[i])
 				summary.append(results[0])
 				logging.info(message)
 				

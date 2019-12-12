@@ -249,6 +249,7 @@ if inputtype=="fastq":
 		logging.info(trimlog)
 	#run bowtie using trimmed fastq and quality scores (--phred33)
 	bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -U {trimmedfastq} -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
+	'''
 	print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
 	print(bowtiecommand)
 	logging.info(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
@@ -260,7 +261,7 @@ if inputtype=="fastq":
 	print(bowtieout[2].decode())	
 	logging.info(bowtieout[1].decode())
 	logging.info(bowtieout[2].decode())	
-
+	'''
 #trim priers and adapters and filter for length from fasta reads, return trimmed "genomic" sequences in fasta format.
 elif inputtype=="fasta":
 	print('inputtype fasta')
@@ -289,6 +290,7 @@ elif inputtype=="fasta":
 		logging.info(trimlog)
 	#run bowtie using trimmed fastq and quality scores (--phred33)
 	bowtiecommand=f'{bowtielocation} --phred33 -p 4 -f -x {bowtieindex} -U {trimmedfasta} -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
+	'''
 	print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
 	print(bowtiecommand)
 	logging.info(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
@@ -300,7 +302,7 @@ elif inputtype=="fasta":
 	print(bowtieout[2].decode())	
 	logging.info(bowtieout[1].decode())
 	logging.info(bowtieout[2].decode())	
-
+	'''
 
 #map reads from fasta file to genome, return sam file with genome locations
 elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-f)
@@ -309,23 +311,23 @@ elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-
 		FASTQ.randomize(fastareads,format='fasta')
 	#add bowtie mapping function to map plasmid sequences?
 	bowtiecommand=f'{bowtielocation} -f -x {bowtieindex} -p 4 -U {fastareads} -S {sam_file}' #2>&1 | tee {rootname}_bowtie.log'
+if mapreads:
 	print(f'mapping reads genome using bowtie2. Writing output to'+colorama.Fore.YELLOW+f' {sam_file}'+colorama.Style.RESET_ALL+f' and '+colorama.Fore.YELLOW+f'{rootname}_bowtie.log'+colorama.Style.RESET_ALL)
 	print(colorama.Fore.CYAN+f'{bowtiecommand}'+colorama.Style.RESET_ALL)
 	logging.info(f'mapping reads genome using bowtie2. Writing output to'+f' {sam_file}'+f' and '+f'{rootname}_bowtie.log')
 	logging.info(f'{bowtiecommand}')
 	bowtie=runbin.Command(bowtiecommand)
 	bowtieout=bowtie.run(timeout=20000)
-	logging.info(bowtieout[1].decode())
 	print(bowtieout[1].decode())
-	logging.error(bowtieout[2].decode())
-	print(colorama.Fore.RED+f'{bowtieout[2].decode()}'+colorama.Style.RESET_ALL)
-	if args.append_summary:
-		sam=pysam.AlignmentFile(sam_file, 'r')
-		alignedcount=0
-		for i in sam:
-			alignedcount+=1
-		summary.append(alignedcount)
-		logging.info(f'{alignedcount} reads mapped.')
+	print(f'{bowtieout[2].decode()}')
+	logging.info(bowtieout[1].decode())
+	logging.info(bowtieout[2].decode())
+	sam=pysam.AlignmentFile(sam_file, 'r')
+	alignedcount=0
+	for i in sam:
+		alignedcount+=1
+	summary.append(alignedcount)
+	logging.info(f'{alignedcount} reads mapped.')
 
 if inputtype=="sam" or mapreads:
 	readslist, unmapped, message = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,chromNTS=chromNTS,randomize=userandomIS,abundant=abundantfilename)
@@ -420,8 +422,8 @@ if getannotations and len:
 		print(vepout[2]) #ERRORS
 	'''
 programend = time.time()
-message=(colorama.Fore.GREEN + f'Completed all tasks in {int(programend-programstart)} seconds. Exiting.'+colorama.Style.RESET_ALL)
-logging.info(f'Completed all tasks in {int(programend-programstart)} seconds. Exiting.')
+message=(colorama.Fore.GREEN + f'Completed all tasks for {rootname} in {int(programend-programstart)} seconds. Exiting.'+colorama.Style.RESET_ALL)
+logging.info(f'Completed all tasks for {rootname} in {int(programend-programstart)} seconds. Exiting.')
 if args.append_summary:
 	with open('./summary.csv','a') as summary_file:
 		csv.writer(summary_file, delimiter=',').writerow(summary)

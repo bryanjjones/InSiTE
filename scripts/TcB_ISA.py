@@ -322,15 +322,18 @@ if mapreads:
 	print(f'{bowtieout[2].decode()}')
 	logging.info(bowtieout[1].decode())
 	logging.info(bowtieout[2].decode())
+	
+
+if inputtype=="sam" or mapreads:
+	readslist, unmapped, message = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,chromNTS=chromNTS,randomize=userandomIS,abundant=abundantfilename)
+	#count total mapped sequences
 	sam=pysam.AlignmentFile(sam_file, 'r')
 	alignedcount=0
 	for i in sam:
 		alignedcount+=1
+	alignedcount=alignedcount-len(unmapped)#remove unmapped reads from list of reads
 	summary.append(alignedcount)
 	logging.info(f'{alignedcount} reads mapped.')
-
-if inputtype=="sam" or mapreads:
-	readslist, unmapped, message = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,chromNTS=chromNTS,randomize=userandomIS,abundant=abundantfilename)
 	logging.info(message)
 if write_csv:
 	message=mappedreads.write_csv(readslist,genome_location_csv)

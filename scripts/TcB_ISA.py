@@ -74,6 +74,7 @@ if __name__ == "__main__":
 	ap.add_argument('--no_seqs', default=False, action='store_true',
 					help='do not get sequences from either entrez or local TwoBit genome around locations indicated by genome_location_csv')
 	ap.add_argument('-z', '--compress_reads', action='store_true', help='compress duplicate reads and reads shifted +/- 1nt, number of reads are compressed in csv, fasta, and mapping outputs')
+	ap.add_argument('-p', '--pairs', help="specify file with paired reads for paired end reads (used in conjunction with '-q' or '-a')")
 	ap.add_argument('--no_annotate', default=False, action='store_true', help='do not map insertion sites to genome annotations')
 	ap.add_argument('--barcode', default='ATCTGCGACG', help=' barcode sequence to trim off of reads')
 	ap.add_argument('--lwindow', default=50, help='numebr of nucleotides upstream of integration site to return', type=int) #window on either side of indicated nt location to return
@@ -158,9 +159,15 @@ rootname=os.path.splitext(inputfile)[0]
 
 #output file names
 sam_file=f'{rootname}.sam'#,'02-wind20-70.sam','03-wind20-70.sam','04-wind20-70.sam','05-wind20-70.sam','06-wind20-70.sam','07-wind20-70.sam','08-wind20-70.sam','09-wind20-70.sam','10-wind20-70.sam','11-wind20-70.sam','12-wind20-70.sam','13-wind20-70.sam',]
+if args.pairs:
+	pairedfile=args.pairs
+else:
+	pairedfile=None
 genome_location_csv=f'{rootname}_IS_mappings.csv'#'IS_data.csv'
 trimmedfastq=f'{rootname}_trimmed.fastq' # fastq file with adapters/primers/barcodes trimmed off with cutadapt and short sequences removed
 trimmedfasta=f'{rootname}_trimmed.fasta' # fasta file with adapters/primers/barcodes trimmed off with cutadapt and short sequences removed
+trimmedfastqpaired=f'{rootname}_trimmed_pairs.fastq' # fastq file with adapters/primers/barcodes trimmed off with cutadapt and short sequences removed
+trimmedfastapaired=f'{rootname}_trimmed_pairs.fasta' # fastq file with adapters/primers/barcodes trimmed off with cutadapt and short sequences removed
 FASTAfile=f'{rootname}_retrieved_2bit.fasta'#output fasta file containing sequences surrounding mapped insertion site
 #outputVEPfile=f"{rootname}_VEPfile.csv" #VEP file containing mapped locations of insertions in VEP format so VEP can provide annotations
 logofile=f"{rootname}IS_logo.svg" # logo file showing consensus integration site in logo format
@@ -234,7 +241,7 @@ else:
 #trim primers and adapters and filter for length from raw fastqreads, return trimmed "genomic" sequences in fasta format.
 if inputtype=="fastq":
 	print('input type fastq')
-	trimlog=FASTQ.Trim(inputfile,trimmedfastq,barcode, primer5, primer3, trim3, trim5, minimum_read_len)
+	trimlog=FASTQ.Trim(inputfile,trimmedfastq,barcode, primer5, primer3, trim3, trim5, minimum_read_len, paired=pairedfile,pairedoutputfile=trimmedfastqpaired)
 	logging.info(trimlog)
 	#summary.append('raw sequences')
 	summary.append(int(len(open(inputfile).readlines())/4))#4 lines per entry in fastq
@@ -248,7 +255,11 @@ if inputtype=="fastq":
 		trimlog=FASTQ.randomize(trimmedfastq,format='fastq')
 		logging.info(trimlog)
 	#run bowtie using trimmed fastq and quality scores (--phred33)
-	bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -U {trimmedfastq} -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
+	if pairedfile:
+		print(f'using paired reads from {inputfile} and {pairedfile}')
+		bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -1 {trimmedfastq} -2 {trimmedfastqpaired} --fr --no-unal -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
+	else:
+		bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -U {trimmedfastq} --no-unal -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
 	'''
 	print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
 	print(bowtiecommand)
@@ -265,23 +276,22 @@ if inputtype=="fastq":
 #trim priers and adapters and filter for length from fasta reads, return trimmed "genomic" sequences in fasta format.
 elif inputtype=="fasta":
 	print('inputtype fasta')
-	trimlog=FASTQ.Trim(inputfile,trimmedfasta,barcode, primer5, primer3, trim3, trim5, minimum_read_len,filetype='fasta')
+	trimlog=FASTQ.Trim(inputfile,trimmedfasta,barcode, primer5, primer3, trim3, trim5, minimum_read_len,filetype='fasta',paired=pairedfile, pairedoutputfile=trimmedfastapaired)
 	logging.info(trimlog)
 	#summary.append('raw sequences')
 	with open(inputfile,"r") as fi:
 		sequencecounter=0
 		for ln in fi:
 			if ln.startswith(">"):
-				sequencecounter=+1
+				sequencecounter+=1
 		summary.append(sequencecounter)
 	#summary.append('trimmed sequences')
 	with open(trimmedfasta,"r") as fi:
 		sequencecounter=0
 		for ln in fi:
 			if ln.startswith(">"):
-				sequencecounter=+1
+				sequencecounter+=1
 		summary.append(sequencecounter)
-	#FASTQ.QtoA(trimmedfastq, f'{rootname}.fasta', Ltrim=0, trim=0)
 	if len(open(trimmedfasta).readlines())==0:
 		logging.critical(f'No sequences left after trimming. Exiting')
 		sys.exit(colorama.Fore.RED+f'No sequences left after trimming. Exiting'+colorama.Style.RESET_ALL)
@@ -289,7 +299,11 @@ elif inputtype=="fasta":
 		trimlog=FASTQ.randomize(trimmedfastq,format='fasta')
 		logging.info(trimlog)
 	#run bowtie using trimmed fastq and quality scores (--phred33)
-	bowtiecommand=f'{bowtielocation} --phred33 -p 4 -f -x {bowtieindex} -U {trimmedfasta} -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
+	if pairedfile:
+		print(f'using paired reads from {inputfile} and {pairedfile}')
+		bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -1 {trimmedfasta} -2 {trimmedfastapaired} --no-unal -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
+	else:
+		bowtiecommand=f'{bowtielocation} --phred33 -p 4 -f -x {bowtieindex} -U {trimmedfasta} --no-unal -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
 	'''
 	print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
 	print(bowtiecommand)
@@ -310,7 +324,7 @@ elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-
 	if userandomSEQS:
 		FASTQ.randomize(fastareads,format='fasta')
 	#add bowtie mapping function to map plasmid sequences?
-	bowtiecommand=f'{bowtielocation} -f -x {bowtieindex} -p 4 -U {fastareads} -S {sam_file}' #2>&1 | tee {rootname}_bowtie.log'
+	bowtiecommand=f'{bowtielocation} -f -x {bowtieindex} -p 4 -U {fastareads} --no-unal -S {sam_file}' #2>&1 | tee {rootname}_bowtie.log'
 if mapreads:
 	print(f'mapping reads genome using bowtie2. Writing output to'+colorama.Fore.YELLOW+f' {sam_file}'+colorama.Style.RESET_ALL+f' and '+colorama.Fore.YELLOW+f'{rootname}_bowtie.log'+colorama.Style.RESET_ALL)
 	print(colorama.Fore.CYAN+f'{bowtiecommand}'+colorama.Style.RESET_ALL)
@@ -331,7 +345,7 @@ if inputtype=="sam" or mapreads:
 	alignedcount=0
 	for i in sam:
 		alignedcount+=1
-	alignedcount=alignedcount-len(unmapped)#remove unmapped reads from list of reads
+	#alignedcount=alignedcount-len(unmapped)#remove unmapped reads from list of reads
 	summary.append(alignedcount)
 	logging.info(f'{alignedcount} reads mapped.')
 	logging.info(message)

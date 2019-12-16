@@ -32,11 +32,17 @@ def QtoA(inputfile, outputfile, Ltrim=0, trim=0):
 	print(colorama.Fore.CYAN+f'writing {outputfile}'+colorama.Style.RESET_ALL)
 	Bio.SeqIO.write(seqs, outputfile, "fasta") #"./inprocess/"+
 	return seqs
-def Trim(inputfile,outputfile,barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='CCTAACTGCTGTGCCACT', trim3=16, trim5=21, minlen=10, filetype='fastq'):
+def Trim(inputfile,outputfile,barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='CCTAACTGCTGTGCCACT', trim3=16, trim5=21, minlen=10, filetype='fastq',paired=None,pairedoutputfile=None):
+	if not pairedoutputfile:
+		pairedoutputfile=f'{outputfile}.pairs'
 	message=[]
 	cutcommand=[]
 	tempfiles=[]
-	if trim3>0 or trim5>0:
+	if paired: # if file is specified for paired end reads, treat primer3 as the primer for the paired reads. 
+		pri3=Bio.Seq.Seq(primer3)
+		pri5=Bio.Seq.Seq(primer5)
+		cutcommand.append(f'{cutadaptlocation} -a ^{barcode5}{pri5}...{pri3.reverse_complement()} -A {pri3}...{pri5.reverse_complement()} -j 0 -m {minlen} --discard-untrimmed -o {outputfile} -p {pairedoutputfile} ./{inputfile} ./{paired}')
+	elif trim3>0 or trim5>0:
 		cutcommand.append(f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 --discard-untrimmed -o ./inprocess/temptrimmed.{filetype} ./{inputfile}')
 		tempfiles.append(f'./inprocess/temptrimmed.{filetype}')
 		if trim3>0 and trim5>0: #both trim3 and 5

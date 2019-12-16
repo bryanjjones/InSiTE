@@ -131,6 +131,12 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},
 			else:
 				sense="+"
 				address=entry.get_reference_positions()[1] #chromosome position of mapping
+				#try:
+				#	address=entry.get_reference_positions()[1] #chromosome position of mapping
+				#except:
+				#	print(entry.query_name())
+				#	if entry.is_paired:
+				#		print(f'pair is {entry.mate.query_name}')
 				q=entry.query_qualities#copy quality scores
 				entry.cigarstring='1M'
 				entry.pos=address

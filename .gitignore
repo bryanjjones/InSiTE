@@ -11,3 +11,4 @@ RAWfastq/
 /RAWfastq/*
 /refrence_datasets/genomes/*
 /refrence_datasets/annotations/*
+./*.sh

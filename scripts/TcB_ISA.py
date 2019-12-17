@@ -304,19 +304,6 @@ elif inputtype=="fasta":
 		bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -1 {trimmedfasta} -2 {trimmedfastapaired} --no-unal -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
 	else:
 		bowtiecommand=f'{bowtielocation} --phred33 -p 4 -f -x {bowtieindex} -U {trimmedfasta} --no-unal -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
-	'''
-	print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
-	print(bowtiecommand)
-	logging.info(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
-	logging.info(bowtiecommand)
-	bowtie=runbin.Command(bowtiecommand)
-	bowtieout=bowtie.run(timeout=20000)
-	bowtieout[1]
-	print(bowtieout[1].decode())
-	print(bowtieout[2].decode())	
-	logging.info(bowtieout[1].decode())
-	logging.info(bowtieout[2].decode())	
-	'''
 
 #map reads from fasta file to genome, return sam file with genome locations
 elif mapreads: #if mapreads, but not using fastq, run bowtie specifying fasta (-f)
@@ -373,19 +360,7 @@ if writelogo: #dependant on having sequences, optional to make logo plot
 	logging.info( f'{weblogocommand}')
 	logocommand=runbin.Command(weblogocommand)
 	logoout=logocommand.run(timeout=1800) 
-'''
-if writevepfile:
-	reads = sorted(readslist, key = lambda x: (x.chrom, x.loc))
-	print(colorama.Style.RESET_ALL + f'Writing file for VEP analysis: '+colorama.Fore.YELLOW + f'{outputVEPfile}')
-	with open(outputVEPfile, 'w', newline='') as formatted_csv_file: #writing file formatted for VEP analysis
-		csv_writer = csv.writer(formatted_csv_file, delimiter='\t') #tab delimited csv file
-		for entry in reads:
-			if entry.chrom == 23:
-				entry.chrom ="X"
-			elif entry.chrom == 24:
-				entry.chrom ="Y"
-			csv_writer.writerow([entry.chrom, str(entry.loc+1), entry.loc, "-/A", entry.sense])
-'''
+
 if getannotations and len:
 	with open(annotationsfile, 'w', newline='') as output_file:
 		totalprinted=False
@@ -394,19 +369,17 @@ if getannotations and len:
 			if featuredist[i]:
 				print(colorama.Style.RESET_ALL+f'mapping insertion site distances to '+colorama.Fore.YELLOW+f'{featurenames[i]}'+colorama.Style.RESET_ALL+f' in '+colorama.Fore.YELLOW+f'{annotations[i]}'+colorama.Style.RESET_ALL)
 				logging.info(f'mapping insertion site distances to '+f'{featurenames[i]}'+f' in '+f'{annotations[i]}')
-				distances, average, standarddev, distancebins, b , message= annotate.closest (ISbamfilename,annotations[i],featurename=featurenames[i],distances=distance,position="start")
+				distances, average, standarddev, median, distancebins, b , message= annotate.closest (ISbamfilename,annotations[i],featurename=featurenames[i],distances=distance,position="start")
 				logging.info(message)
 				try:
 					output_writer.writerow([f'{featurenames[i]}(average distance)',average])
 					output_writer.writerow([f'{featurenames[i]}(standard deviation)',standarddev])
-					#summary.append(featurenames[i])
-					#summary.append('average distanance')
+					output_writer.writerow([f'{featurenames[i]}(median)',median])
 					summary.append(average)
-					#summary.append('st dev')
 					summary.append(standarddev)
+					summary.append(median)
 					for j in range(len(distance)):
 						output_writer.writerow([f'integration events within {distance[j]} bp of {featurenames[i]}',distancebins[j]])
-						#summary.append(f'within {distance[j]}bp')
 						summary.append(distancebins[j])
 				except:
 					logging.error("can't write stats. Maybe there were no sequences")

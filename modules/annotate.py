@@ -102,6 +102,7 @@ def closest(queryfilename, refrencefilename, featurename='TSS', position="start"
             if i.count<=distances[j]:
                 closedistances[j].append(i.count)
     average=statistics.mean(distancelist)
+    median=statistics.median(distancelist)
     if len(distancelist) > 1:
         standarddev=statistics.stdev(distancelist)
     else:
@@ -109,13 +110,15 @@ def closest(queryfilename, refrencefilename, featurename='TSS', position="start"
     if not quiet:
         print(colorama.Style.RESET_ALL+f'average distance to '+colorama.Fore.YELLOW+f'{featurename}\t\t\t{round(average):,}\t'+colorama.Style.RESET_ALL+f'bp')
         print(colorama.Style.RESET_ALL+f'standard deviation distance to '+colorama.Fore.YELLOW+f'{featurename}\t{round(standarddev):,}\t'+colorama.Style.RESET_ALL+f'bp')
+        print(colorama.Style.RESET_ALL+f'median distance to '+colorama.Fore.YELLOW+f'{featurename}\t{round(median):,}\t'+colorama.Style.RESET_ALL+f'bp')
         message.append(f'average distance to '+f'{featurename}\t\t\t{round(average):,}\t'+f'bp')
         message.append(f'standard deviation distance to '+f'{featurename}\t{round(standarddev):,}\t'+f'bp')
+        message.append(f'median distance to '+f'{featurename}\t\t\t{round(average):,}\t'+f'bp')
     for i in range(len(closedistances)):
         distancebins.append(len(closedistances[i]))
         print(colorama.Style.RESET_ALL+f'sites within '+colorama.Fore.YELLOW+f'{distances[i]}'+colorama.Style.RESET_ALL+f' bp of '+colorama.Fore.YELLOW+f'{featurename}\t\t{len(closedistances[i]):,}'+colorama.Style.RESET_ALL)
         message.append(f'sites within '+f'{distances[i]}'+f' bp of '+f'{featurename}\t\t{len(closedistances[i]):,}')
-    return distancelist, average, standarddev, distancebins, b, "\n".join(message)
+    return distancelist, average, standarddev, median, distancebins, b, "\n".join(message)
 
 #main function to map features in IS bam file to feature file (gff/gtf/bed). if single=Falso, map to given featurenames list in feature file. if single=True, all features in feature file are treated as the target feature. If save=True, each subset of features is saved as new file.
 def featuremap (gff, bam, featurenames=['intron', 'exon'],single=False,save=False,procs=3):   

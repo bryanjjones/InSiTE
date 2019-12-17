@@ -36,8 +36,9 @@ class read_csv_line(object):
 #if compressedreads:
 #compress a sorted readlist by merging identical locations and, if adjacent=True, merging adjacent locations too (merges to location with greatest count)
 def compress(bamfile,compressedbam=None,adjacent=True): #compressedbam=f'compressed_{bamfile}',
-	if not compressedbam:
+	if not compressedbam:# if not given a new file name, overwrite existing bam file
 		compressedbam=bamfile
+	print(f'compressing duplicate reads in {bamfile}. Writing compressed list with counts to {compressedbam}.')
 	semicompressed_readslist=[]
 	compressed_readslist=[]
 	expanded=pysam.AlignmentFile(bamfile, 'rb')
@@ -45,6 +46,7 @@ def compress(bamfile,compressedbam=None,adjacent=True): #compressedbam=f'compres
 	previous=None
 	for entry in expanded: #merge 
 		entry.set_tag('IH',1)
+		print('creatting IH tag')
 		if previous:
 			if previous.pos==entry.pos: # if this entry matches the previous one, add one to previous, and ignore this one.
 				count=previous.get_tag('IH')+entry.get_tag('IH')
@@ -88,7 +90,7 @@ def compress(bamfile,compressedbam=None,adjacent=True): #compressedbam=f'compres
 		compressed.close()
 		#return semicompressed_readslist
 
-def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},randomize=False,expandbam=False, abundant=None): #sorted_file=f'{sam_file}_sorted.bam', 
+def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True,chromNTS={},randomize=False,expandbam=False, abundant=None): #sorted_file=f'{sam_file}_sorted.bam', 
 #if read_sam_file:
 	message=[]
 	'''
@@ -167,11 +169,14 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},
 			sense="+"
 		chrom=entry.reference_name[3:] #chromosome number of mapping
 		address=entry.pos
-		count=entry.get_tag('IH')
-		if abundant:
-			abundantlist.append((count,entry))
+		if compressreads:
+			count=entry.get_tag('IH')
+			if abundant:
+				abundantlist.append((count,entry))
+		else:
+			count=1
 		readslist.append(read_csv_line([chrom, sense, address,'',count,'','','','','','']))#,chromNTS=chromNTS, userandomIS=random))
-	if abundant: # if abundant filename given, sort reads by most abundant, and write to that file as bam file
+	if abundant and compressreads: # if abundant filename given, sort reads by most abundant, and write to that file as bam file
 		abundantbamfile = pysam.AlignmentFile(abundant, 'wb', template=ISbamfile)
 		abundantlist.sort(key=lambda tup: tup[0], reverse=True)
 		mostover=round((100*abundantlist[0][0]/entries),3)
@@ -188,6 +193,8 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=False,chromNTS={},
 		for i in abundantlist:
 			abundantbamfile.write(i[1])
 		abundantbamfile.close()
+	elif abundant:
+		print(colorama.Fore.RED+f'Need to count reads to calculate most abundant sequences. If you want abundant sequences, please specify compressreads too.'+colorama.Style.RESET_ALL)
 
 	print(colorama.Fore.YELLOW+f'{entries}'+colorama.Style.RESET_ALL+f' reads in sam file. '+colorama.Fore.YELLOW+f'{len(readslist)}'+colorama.Style.RESET_ALL+f' were mapped to a chromosome, '+colorama.Fore.YELLOW+f'{len(unmapped)} '+colorama.Style.RESET_ALL+f'did not map to a chromosome.')
 	message.append(f'{entries} reads in sam file. {entries-len(unmapped)} were mapped to a chromosome, {len(unmapped)} did not map to a chromosome. count is {counter}')

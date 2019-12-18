@@ -18,9 +18,6 @@ class read_csv_line(object):
 			self.sensenum=1
 		elif row[1]=="-":
 			self.sensenum=2
-		#if userandomIS: #if random IS used, per "read" use a random number for insertion site
-		#	self.loc=random.randrange(int(chromNTS[str(self.chrom)])) # random int returned in the range of the given chromosome range
-		#else: #if not random, use given values
 		self.loc=int(row[2])
 		self.gene=row[3]
 		self.totalseqs=row[4]
@@ -46,7 +43,6 @@ def compress(bamfile,compressedbam=None,adjacent=True): #compressedbam=f'compres
 	previous=None
 	for entry in expanded: #merge 
 		entry.set_tag('IH',1)
-		print('creatting IH tag')
 		if previous:
 			if previous.pos==entry.pos: # if this entry matches the previous one, add one to previous, and ignore this one.
 				count=previous.get_tag('IH')+entry.get_tag('IH')
@@ -58,13 +54,6 @@ def compress(bamfile,compressedbam=None,adjacent=True): #compressedbam=f'compres
 		else: 
 			previous=entry
 	semicompressed_readslist.append(previous)#write the last read to compressed
-	'''
-		if i+1<len(readslist) and readslist[i].loc==readslist[i+1].loc and readslist[i].chrom == readslist[i+1].chrom: #if this read isn't the last one and if it's the same as the next one
-			readslist[i+1].totalseqs=readslist[i+1].totalseqs+readslist[i].totalseqs #if they are the same chromosome and locus, add to the total
-		else:
-			semicompressed_readslist.append(readslist[i]) #if it's different than the next one, add it to the list (with the total count)
-	'''
-	#adjust loc +/- 1 to account for indels
 	compressed=pysam.AlignmentFile(compressedbam, 'wb', template=expanded)
 	expanded.close()
 	if adjacent:
@@ -93,16 +82,6 @@ def compress(bamfile,compressedbam=None,adjacent=True): #compressedbam=f'compres
 def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True,chromNTS={},randomize=False,expandbam=False, abundant=None): #sorted_file=f'{sam_file}_sorted.bam', 
 #if read_sam_file:
 	message=[]
-	'''
-	#convert sam file into bam file
-	insam=pysam.AlignmentFile(sam_file,"r")
-	outbam=pysam.AlignmentFile(sorted_file, 'wb', template=insam)
-	for s in insam:
-		outbam.write(s)
-	#sort sequences in newly created bam file
-	pysam.sort("-o",sorted_file,sorted_file)
-	samfile = pysam.AlignmentFile(sorted_file, "rb")
-	'''
 	samfile = pysam.AlignmentFile(sam_file, 'r')
 	ISbamfile = pysam.AlignmentFile(ISbamfilename,'wb',template=samfile)
 	print(colorama.Fore.GREEN + f'Reading sam file: '+colorama.Style.RESET_ALL+f' {sam_file}')
@@ -133,12 +112,6 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True,chromNTS={},r
 			else:
 				sense="+"
 				address=entry.get_reference_positions()[1] #chromosome position of mapping
-				#try:
-				#	address=entry.get_reference_positions()[1] #chromosome position of mapping
-				#except:
-				#	print(entry.query_name())
-				#	if entry.is_paired:
-				#		print(f'pair is {entry.mate.query_name}')
 				q=entry.query_qualities#copy quality scores
 				entry.cigarstring='1M'
 				entry.pos=address

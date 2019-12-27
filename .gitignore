@@ -1,5 +1,6 @@
 AlignedIS.fasta
 ./*.csv
+*.sh
 MAFFTfiles/
 genomes/
 htslib/
@@ -11,4 +12,3 @@ RAWfastq/
 /RAWfastq/*
 /refrence_datasets/genomes/*
 /refrence_datasets/annotations/*
-./*.sh

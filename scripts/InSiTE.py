@@ -19,7 +19,7 @@ import logging
 
 #inputs:
 inputtype='fastq' #sam, csv, fasta, fastq
-inputfile='05.fastq' #input file name
+inputfile='' #input file name
 userandomIS=0#0 #useful for generating a random control data set chromosome matched to query set.
 userandomSEQS=0 #generate random sequence data, usefull for calculating false positive rate when mapping reads w/ bowtie
 
@@ -29,16 +29,16 @@ compressreads=1 #remove duplicate reads and reads shifted +/- 1 nt, number of re
 getannotations=1#1 # use annotate.py module to map insertion sites to anotations 
 
 #parameters
-barcode='ATCTGCGACG' #5' barcode sequence 05:ATCTGCGACG
+barcode='' #5' barcode sequence 05:ATCTGCGACG
 lwindow=50 #window on either side of indicated nt location to return
 rwindow=50
 samwindow=0#60
 sequencesource='LOCAL' #get sequences from 'LOCAL' TwoBit genome or 'REMOTE' entrez server
-minimum_read_len=25 #minimum length of a read to try mapping. 25 will usually avoid any false positives in read sets of 200k reads
-primer5='GGGTTCCGCCGGATGGC' #5' primer sequenc to remove from reads 
-primer3='CCTAACTGCTGTGCCACT' #3' primer sequence to remove from reads
-trim5=21 #additional (non-genomic) nts to trim off of 3' end of reads
-trim3=16 #additional (non-genomic) nts to trim off of 5' end of reads (starts with TA)
+minimum_read_len=25 #minimum length of a read to try mapping. 25 was found to usually avoid any false positives in read sets of 200k reads
+primer5='' #5' primer sequenc to remove from reads 
+primer3='' #3' primer sequence to remove from reads
+trim5=0 #additional (non-genomic) nts to trim off of 3' end of reads #21
+trim3=0 #additional (non-genomic) nts to trim off of 5' end of reads (starts with TA) #16
 featurenames=['intron', 'exon','codingexon','transcript','TSS'] #feature names found in feature files to map reads to
 featuredist=[False,False,False,False,True]# weather to map distance of each read, or only whether reads overlap with feature
 distance=[1000,2000,4000,8000,16000,32000,64000] # distance in bp to be considered close to feature
@@ -76,30 +76,30 @@ if __name__ == "__main__":
 	ap.add_argument('-z', '--compress_reads', action='store_true', help='compress duplicate reads and reads shifted +/- 1nt, number of reads are compressed in csv, fasta, and mapping outputs')
 	ap.add_argument('-p', '--pairs', help="specify file with paired reads for paired end reads (used in conjunction with '-q' or '-a')")
 	ap.add_argument('--no_annotate', default=False, action='store_true', help='do not map insertion sites to genome annotations')
-	ap.add_argument('--barcode', default='ATCTGCGACG', help=' barcode sequence to trim off of reads')
+	ap.add_argument('--barcode', default='', metavar='NNNNN', help=' barcode sequence to trim off of reads')
 	ap.add_argument('--lwindow', default=50, help='numebr of nucleotides upstream of integration site to return', type=int) #window on either side of indicated nt location to return
 	ap.add_argument('--rwindow', default=50, help='number of nucleotides downstream of integration site to return', type=int) #window on either side of indicated nt location to return
 	ap.add_argument('--samwindow', default=0, type=int, help='depreciated')#60
 	ap.add_argument('--remote', action='store_true', help="get sequences from entrez server instead of 'LOCAL' TwoBit genome")
 	ap.add_argument('--min', default=25, type=int, help='minimum length of a read to try mapping. default (25) will usually avoid any false positives in read sets of 200k reads')
-	ap.add_argument('--primer5', default='GGGTTCCGCCGGATGGC', help="5' primer sequenc to remove from reads") 
-	ap.add_argument('--primer3', default='CCTAACTGCTGTGCCACT', help="3' primer sequence to remove from reads")
-	ap.add_argument('--trim5', default=21, type=int, help="additional (non-genomic) nts to trim off of 3' end of reads")
-	ap.add_argument('--trim3', default=16, type=int, help="additional (non-genomic) nts to trim off of 5' end of reads (starts with TA)")
-	ap.add_argument('--feature', action='append', help='feature names found in feature files to map reads to')#['intron', 'exon','codingexon','transcript','TSS'] #feature names found in feature files to map reads to
-	ap.add_argument('--dist', action='append', help='weather to map distance of each read, or only whether reads overlap with feature. same number of distance variables must be given as features.')
+	ap.add_argument('--primer5', default='', metavar='NNNNN', help="5' primer sequenc to remove from reads") 
+	ap.add_argument('--primer3', default='', metavar='NNNNN', help="3' primer sequence to remove from reads")
+	ap.add_argument('--trim5', default=0, type=int, help="additional (non-genomic) nts to trim off of 3' end of reads")
+	ap.add_argument('--trim3', default=0, type=int, help="additional (non-genomic) nts to trim off of 5' end of reads")# (starts with TA)")
+	ap.add_argument('--feature', action='append', metavar='intron/exon/transcript/TSS/etc', help='feature names found in feature files to map reads to, e.g. "exon"')#['intron', 'exon','codingexon','transcript','TSS'] #feature names found in feature files to map reads to
+	ap.add_argument('--dist', action='append', metavar='True/False', help='weather to map distance of each read, or only whether reads overlap with feature. same number of distance variables must be given as features.')
 	ap.add_argument('--close', action='append', type=int, help='distance in bp to be considered close to feature')
-	ap.add_argument('--chromosome_ids', default='./refrence_datasets/chromosomes.csv')
-	ap.add_argument('--bowtielocation', default = 'bowtie2')
-	ap.add_argument('--bowtieindex', default = './refrence_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index')
-	ap.add_argument('--weblogolocation', default = 'weblogo')#in PATH
-	ap.add_argument('--twobitlocation', default = './scripts/TwoBitToFa')
-	ap.add_argument('--twobitgenomelocation', default='./refrence_datasets/genomes/GRCh38.2bit')
-	ap.add_argument('--annotations', action='append', help='location of annotation file(s) (bed/gff/gtf), must be same number of files as features specified')#['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcripts.gtf','./refrence_datasets/annotations/gencode.v32.transcripts.gtf']
-	ap.add_argument('--supress_csv', default=False, action='store_true')
-	ap.add_argument('--supress_fasta',default=False, action='store_true')
-	ap.add_argument('--supress_logo',default=False, action='store_true')
-	ap.add_argument('--append_summary',default=False, action='store_true')
+	ap.add_argument('--chromosome_ids', metavar='/path/to/chromosomes.csv', default='./refrence_datasets/chromosomes.csv')
+	ap.add_argument('--bowtielocation', metavar='/path/to/bowtie2', default = 'bowtie2')
+	ap.add_argument('--bowtieindex', metavar='/path/to/bowtieindex', default = './refrence_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index')
+	ap.add_argument('--weblogolocation', metavar='/path/to/weblogo', default = 'weblogo')#in PATH
+	ap.add_argument('--twobitlocation', metavar='/path/to/TwoBitToFa', default = './scripts/TwoBitToFa')
+	ap.add_argument('--twobitgenomelocation', metavar='/path/to/genome.2bit', default='./refrence_datasets/genomes/GRCh38.2bit')
+	ap.add_argument('--annotations', action='append', metavar='/path/to/annotation_file.bed/gff/gtf', help='location of annotation file(s) (bed/gff/gtf), must be same number of files as features specified')#['./refrence_datasets/annotations/gencode.v32.introns.bed','./refrence_datasets/annotations/gencode.v32.exons.bed','./refrence_datasets/annotations/gencode.v32.codingexons.bed','./refrence_datasets/annotations/gencode.v32.transcripts.gtf','./refrence_datasets/annotations/gencode.v32.transcripts.gtf']
+	ap.add_argument('--supress_csv', default=False, action='store_true',help='do not output csv file')
+	ap.add_argument('--supress_fasta',default=False, action='store_true',help='do not ouptput fasta file')
+	ap.add_argument('--supress_logo',default=False, action='store_true',help='do not output logo')
+	ap.add_argument('--append_summary',default=False, action='store_true',help='add summary metrics to summary.csv file')
 	args = ap.parse_args()
 
 	if args.fastq:
@@ -158,7 +158,7 @@ if __name__ == "__main__":
 rootname=os.path.splitext(inputfile)[0]
 
 #output file names
-sam_file=f'{rootname}.sam'#,'02-wind20-70.sam','03-wind20-70.sam','04-wind20-70.sam','05-wind20-70.sam','06-wind20-70.sam','07-wind20-70.sam','08-wind20-70.sam','09-wind20-70.sam','10-wind20-70.sam','11-wind20-70.sam','12-wind20-70.sam','13-wind20-70.sam',]
+sam_file=f'{rootname}.sam'
 if args.pairs:
 	pairedfile=args.pairs
 else:
@@ -196,9 +196,6 @@ elif inputtype=="fastq":
 else:
 	warnings.append("Specify input file type as 'sam', 'csv', 'fasta', or 'fastq'")
 	sys.exit(colorama.Fore.RED + 'Specify input file type as \'sam\', \'csv\', \'fasta\', or \'fastq\'')
-#if getseqs or writeFASTA or writevepfile:
-#	if read_sam_file == read_csv == 0:#
-#		sys.exit(colorama.Fore.RED + 'Cannot get sequences, write a FASTA, or write a VEP file without being given a csv or sam file')
 if (writeFASTA == 1 or writelogo ==1) and getseqs == 0: #or writevepfile ==1 or or getannotations==1
 	warnings.append("Can't write a fasta file or logo file, or get annotations without getting sequences.")
 	sys.exit(colorama.Fore.RED + "Can't write a fasta file or logo file, or get annotations without getting sequences.") #, vep file, 
@@ -225,7 +222,6 @@ with open(chromosome_ids) as csv_file:
 		name=row[1]
 		ID=row[2]
 		nts=row[4]
-		#print(f'chromosome ' + colorama.Fore.YELLOW + f'{name}'+colorama.Style.RESET_ALL + ' is called ' + colorama.Fore.YELLOW + f'{ID}'+colorama.Style.RESET_ALL + ' and has '+ colorama.Fore.YELLOW + f'{nts}'+colorama.Style.RESET_ALL + ' nucleotides')
 		chromIDS[name]=ID
 		chromNTS[name]=nts
 
@@ -233,7 +229,6 @@ if userandomIS or userandomSEQS:
 	random.seed(a=None, version=2) #initialized random number generator w/ no seed (use system time)
 
 if sequencesource =='LOCAL':
-#	GRCh38=Bio.SeqIO.index('../genomes/GRCh38.fasta',"fasta")
 	genome=twobitreader.TwoBitFile(twobitgenomelocation) #reads genome into object
 else:
 	genome=None
@@ -243,11 +238,8 @@ if inputtype=="fastq":
 	print('input type fastq')
 	trimlog=FASTQ.Trim(inputfile,trimmedfastq,barcode, primer5, primer3, trim3, trim5, minimum_read_len, paired=pairedfile,pairedoutputfile=trimmedfastqpaired)
 	logging.info(trimlog)
-	#summary.append('raw sequences')
 	summary.append(int(len(open(inputfile).readlines())/4))#4 lines per entry in fastq
-	#summary.append('trimmed sequences')
 	summary.append(int(len(open(trimmedfastq).readlines())/4))
-	#FASTQ.QtoA(trimmedfastq, f'{rootname}.fasta', Ltrim=0, trim=0)
 	if len(open(trimmedfastq).readlines())==0:
 		logging.critical(f'No sequences left after trimming. Exiting')
 		sys.exit(colorama.Fore.RED+f'No sequences left after trimming. Exiting'+colorama.Style.RESET_ALL)
@@ -260,19 +252,6 @@ if inputtype=="fastq":
 		bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -1 {trimmedfastq} -2 {trimmedfastqpaired} --fr --no-unal -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
 	else:
 		bowtiecommand=f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -U {trimmedfastq} --no-unal -S {rootname}.sam' #2>&1 | tee {rootname}_bowtie.log'
-	'''
-	print(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
-	print(bowtiecommand)
-	logging.info(f'mapping reads genome using bowtie2. Writing output to {rootname}.sam')
-	logging.info(bowtiecommand)
-	bowtie=runbin.Command(bowtiecommand)
-	bowtieout=bowtie.run(timeout=20000)
-	bowtieout[1]
-	print(bowtieout[1].decode())
-	print(bowtieout[2].decode())	
-	logging.info(bowtieout[1].decode())
-	logging.info(bowtieout[2].decode())	
-	'''
 #trim priers and adapters and filter for length from fasta reads, return trimmed "genomic" sequences in fasta format.
 elif inputtype=="fasta":
 	print('inputtype fasta')
@@ -324,7 +303,6 @@ if mapreads:
 	logging.info(bowtieout[1].decode())
 	logging.info(bowtieout[2].decode())
 	
-
 if inputtype=="sam" or mapreads:
 	readslist, unmapped, message = mappedreads.read_sam(sam_file,chromIDS,ISbamfilename, compressreads=compressreads,chromNTS=chromNTS,randomize=userandomIS,abundant=abundantfilename)
 	#count total mapped sequences
@@ -341,10 +319,6 @@ if write_csv:
 	logging.info(message)
 
 #Chrom,Sense,Loc,Gene,Total # IS Sequences Found,Total # IS Found,Plasmid m995,Sample1,Sample2,Sample3,Sample4
-
-#read_csv should always be followed by getseqs, which will genererate readslist
-#if read_csv:
-#	readslist=mappedreads.read_csv(genome_location_csv)#reads genome location csv file
 
 if getseqs:
 	recordlist, readslist=getseq.get_seqs(readslist, lwindow, rwindow, samwindow,genome, source=sequencesource)
@@ -384,7 +358,7 @@ if getannotations and len:
 				except:
 					logging.error("can't write stats. Maybe there were no sequences")
 					print("can't write stats. Maybe there were no sequences")
-				with open(distancesfile, 'w', newline='') as distance_file:
+				with open(distancesfile, 'a+', newline='') as distance_file:
 					dist_writer = csv.writer(distance_file, delimiter=",")
 					dist_writer.writerow(distances)
 			else:
@@ -401,16 +375,6 @@ if getannotations and len:
 				summary.append(results[0])
 				logging.info(message)
 				
-	'''
-	vepcommand=f'{veplocation} -i {outputVEPfile} -o {annotationsfile} --force_overwrite --buffer_size 100000 --merged --format "ensembl" --cache --nearest gene --distance 1 --offline --use_given_ref --fork 4 --pick' #runs vep using "--merged" ensembl and refseq genomes (what i currently have "--cached" on my machine). return the "--nearest gene". --distance from query to look for genes. maybe add --symbol --protein --ccds. Maybe add back: --numbers --domains --biotype --hgvs add --merged --gencode_basci
-	print(colorama.Style.RESET_ALL + f'Running VEP analysis to annotate genomic positions using ensembl vep.'+colorama.Fore.YELLOW + f'"{vepcommand}"')
-	vep=runbin.Command(vepcommand)
-	vepout=vep.run(timeout=20000)
-	if len(vepout[1])>0:
-		print(vepout[1]) #STDOUT
-	if len(vepout[2])>0:
-		print(vepout[2]) #ERRORS
-	'''
 programend = time.time()
 message=(colorama.Fore.GREEN + f'Completed all tasks for {rootname} in {int(programend-programstart)} seconds. Exiting.'+colorama.Style.RESET_ALL)
 logging.info(f'Completed all tasks for {rootname} in {int(programend-programstart)} seconds. Exiting.')

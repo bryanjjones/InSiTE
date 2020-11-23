@@ -41,7 +41,7 @@ trim5=0 #additional (non-genomic) nts to trim off of 3' end of reads #21
 trim3=0 #additional (non-genomic) nts to trim off of 5' end of reads (starts with TA) #16
 featurenames=['intron', 'exon','codingexon','transcript','TSS'] #feature names found in feature files to map reads to
 featuredist=[False,False,False,False,True]# weather to map distance of each read, or only whether reads overlap with feature
-distance=[1000,2000,4000,8000,16000,32000,64000] # distance in bp to be considered close to feature
+distance=[100,200,400] # distance in bp to be considered close to feature
 
 
 #outputs:

@@ -1,0 +1,7 @@
+./scripts/InSiTE.py -q ./examples/example1.fastq -z --barcode 'TATATAGCAC' -z --trim5 21 --trim3 16 --primer5 'GGGTTCCGCCGGATGGC' --primer3 'CCTAACTGCTGTGCCACT'
+./scripts/InSiTE.py -q ./examples/example1.fastq -z -r --barcode 'TATATAGCAC' --append_summary --trim5 21 --trim3 15 --primer5 'GGGTTCCGCCGGATGGC' --primer3 'CCTAACTGCTGTGCCACT'
+./scripts/InSiTE.py -q ./examples/example2.fastq -z --barcode 'ATGCGTAAACTTCCGACTTCAACTG'
+./scripts/InSiTE.py -q ./examples/example3.fastq -z
+./scripts/InSiTE.py -a ./examples/example4.fasta -z
+./scripts/InSiTE.py -q ./examples/example5.fastq -z --primer5 'TCAGNNTNNNCCTTGCAAAATGGCGTTACTTAAGCTAGCTTGCCAAACCTACAGGTGGGGCCTTTCA' --primer3 'CCTAACTGCTGTGCCACTCTGAGCGGGCTGGCAAGGC'
+./scripts/InSiTE.py -a ./examples/example6.fasta -z --primer5 'GTCTCCTCTGAGTGATTGACTACCCGTCAGCGGGGGTCTTTCA'

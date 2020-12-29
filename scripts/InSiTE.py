@@ -412,7 +412,7 @@ if getannotations and len:
                     colorama.Style.RESET_ALL + f'mapping insertion site distances to ' + colorama.Fore.YELLOW +
                     f'{featurenames[i]}' + colorama.Style.RESET_ALL + f' in ' + colorama.Fore.YELLOW +
                     f'{annotations[i]}' + colorama.Style.RESET_ALL)
-                logging.info(
+                logging.debug(
                     f'mapping insertion site distances to ' + f'{featurenames[i]}' + f' in ' + f'{annotations[i]}')
                 distances, average, standarddev, median, distancebins, b, message = annotate.closest(ISbamfilename,
                                                                                                      annotations[i],

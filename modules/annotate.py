@@ -151,7 +151,7 @@ def featuremap(gff, bam, featurenames=['intron', 'exon'], single=False, save=Fal
         for feature in sets:
             results.append(count_reads_in_features(None, bam, features=feature))
     for label, reads in zip(featurenames, results):
-        print(colorama.Fore.GREEN + f'{label}\t{reads:,}' + colorama.Style.RESET_ALL)
+        print(f'sites in ' + colorama.Fore.GREEN + f'{label}\t{reads:,}' + colorama.Style.RESET_ALL)
         message.append(f'sites mapped in {label}\t{reads:,}')
     # Run count_reads_in_features in parallel over features
     total = pybedtools.BedTool(bam).count()

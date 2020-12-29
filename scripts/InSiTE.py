@@ -391,7 +391,7 @@ if getseqs:
     recordlist, readslist = getseq.get_seqs(readslist, lwindow, rwindow, samwindow, genome, source=sequencesource)
 
 if writeFASTA:  # write FASTA formatted file with returned sequences
-    print(colorama.Style.RESET_ALL + f'\rWriting fasta file:' + colorama.Fore.YELLOW + f' {FASTAfile}' +
+    print(colorama.Style.RESET_ALL + f'\nWriting fasta file:' + colorama.Fore.YELLOW + f' {FASTAfile}' +
           colorama.Style.RESET_ALL)
     Bio.SeqIO.write(recordlist, FASTAfile, "fasta")
 if writelogo:  # dependant on having sequences, optional to make logo plot

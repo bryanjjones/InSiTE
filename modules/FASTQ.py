@@ -44,16 +44,16 @@ def Trim(inputfile, outputfile, barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='
         cutcommand.append(
             f'{cutadaptlocation} -a ^{barcode5}{pri5}...{pri3.reverse_complement()} -A {pri3}...'
             f'{pri5.reverse_complement()} -j 0 -m {minlen} --discard-untrimmed -o {outputfile} -p {pairedoutputfile} '
-            f'./{inputfile} ./{paired}')
+            f'./{inputfile} ./{paired} --report minimal')
     elif trim3 > 0 or trim5 > 0:
         cutcommand.append(
             f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 --discard-untrimmed '
-            f'-o ./inprocess/temptrimmed.{filetype} ./{inputfile}')
+            f'-o ./inprocess/temptrimmed.{filetype} ./{inputfile} --report minima')
         tempfiles.append(f'./inprocess/temptrimmed.{filetype}')
         if trim3 > 0 and trim5 > 0:  # both trim3 and 5
             cutcommand.append(
                 f'{cutadaptlocation} -u -{trim3} -j 0 -o ./inprocess/temptrimmed1.{filetype} '
-                f'./inprocess/temptrimmed.{filetype}')
+                f'./inprocess/temptrimmed.{filetype} --report minima')
             cutcommand.append(
                 f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.{filetype} '
                 f'--report minimal')

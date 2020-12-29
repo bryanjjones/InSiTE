@@ -32,7 +32,8 @@ def count_reads_in_features(featurefile, bam, features=None):
 
     if features is not None:
         if featurefile:
-            print(f'given both file name and feature set: Using variable, ignoring file: {featurefile}')
+            print(colorama.Fore.RED + f'Given both file name and feature set: Using feature set, ignoring file: ' +
+                  colorama.Fore.YELLOW + f'{featurefile}' + colorama.Style.RESET_ALL)
     else:
         features = pybedtools.BedTool(
             featurefile).sort().merge()  # sort and merge all features in feature file
@@ -55,11 +56,13 @@ def intersection(a, b):
     return a_only, b_only, a_and_b
 
 
-def featuresets(gff, featuretypes=['intron', 'exon'], save=False):
+def featuresets(gff, featuretypes=None, save=False):
     # Takes a gff file and list of feature types. Returns a list of BedTool objects for each specified featuretype
     # Some GFF files have invalid entries -- like chromosomes with negative coords
     # or features of length = 0.  This line removes them (the `remove_invalid`
     # method) and saves the result in a tempfile
+    if featuretypes is None:
+        featuretypes = ['intron', 'exon']
     g = pybedtools.BedTool(gff).remove_invalid().saveas()
     g = g.sort()
     sets = []
@@ -110,25 +113,24 @@ def closest(queryfilename, refrencefilename, featurename='TSS', position="start"
         standarddev = 0
     if not quiet:
         print(
-            colorama.Style.RESET_ALL + f'average distance to ' + colorama.Fore.YELLOW +
-            f'{featurename}\t\t\t{round(average):,}\t' + colorama.Style.RESET_ALL + f'bp')
+            f'average distance to ' + colorama.Fore.GREEN + f'{featurename}\t\t\t{round(average):,}\t' +
+            colorama.Style.RESET_ALL + f'bp')
         print(
-            colorama.Style.RESET_ALL + f'standard deviation distance to ' + colorama.Fore.YELLOW +
-            f'{featurename}\t{round(standarddev):,}\t' + colorama.Style.RESET_ALL + f'bp')
+            f'standard deviation distance to ' + colorama.Fore.GREEN + f'{featurename}\t{round(standarddev):,}\t' +
+            colorama.Style.RESET_ALL + f'bp')
         print(
-            colorama.Style.RESET_ALL + f'median distance to ' + colorama.Fore.YELLOW +
-            f'{featurename}\t{round(median):,}\t' + colorama.Style.RESET_ALL + f'bp')
-        message.append(f'average distance to ' + f'{featurename}\t\t\t{round(average):,}\t' + f'bp')
-        message.append(f'standard deviation distance to ' + f'{featurename}\t{round(standarddev):,}\t' + f'bp')
-        message.append(f'median distance to ' + f'{featurename}\t\t\t{round(average):,}\t' + f'bp')
+            f'median distance to ' + colorama.Fore.GREEN + f'{featurename}\t{round(median):,}\t' +
+            colorama.Style.RESET_ALL + f'bp')
+        message.append(f'average distance to {featurename}\t\t\t{round(average):,}\tbp')
+        message.append(f'standard deviation distance to {featurename}\t{round(standarddev):,}\tbp')
+        message.append(f'median distance to {featurename}\t\t\t{round(average):,}\tbp')
     for i in range(len(closedistances)):
         distancebins.append(len(closedistances[i]))
         print(
-            colorama.Style.RESET_ALL + f'sites within ' + colorama.Fore.YELLOW + f'{distances[i]}' +
-            colorama.Style.RESET_ALL + f' bp of ' + colorama.Fore.YELLOW +
-            f'{featurename}\t\t{len(closedistances[i]):,}' + colorama.Style.RESET_ALL)
+            f'sites within ' + colorama.Fore.GREEN + f'{distances[i]}' + colorama.Style.RESET_ALL + f' bp of ' +
+            colorama.Fore.GREEN + f'{featurename}\t\t{len(closedistances[i]):,}' + colorama.Style.RESET_ALL)
         message.append(
-            f'sites within ' + f'{distances[i]}' + f' bp of ' + f'{featurename}\t\t{len(closedistances[i]):,}')
+            f'sites within {distances[i]} bp of {featurename}\t\t{len(closedistances[i]):,}')
     return distancelist, average, standarddev, median, distancebins, b, "\n".join(message)
 
 
@@ -149,7 +151,7 @@ def featuremap(gff, bam, featurenames=['intron', 'exon'], single=False, save=Fal
         for feature in sets:
             results.append(count_reads_in_features(None, bam, features=feature))
     for label, reads in zip(featurenames, results):
-        print(colorama.Fore.YELLOW + f'{label}\t{reads:,}' + colorama.Style.RESET_ALL)
+        print(colorama.Fore.GREEN + f'{label}\t{reads:,}' + colorama.Style.RESET_ALL)
         message.append(f'sites mapped in {label}\t{reads:,}')
     # Run count_reads_in_features in parallel over features
     total = pybedtools.BedTool(bam).count()

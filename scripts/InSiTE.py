@@ -294,7 +294,7 @@ else:
 # trim primers and adapters and filter for length from raw fastqreads, return trimmed "genomic" sequences in fasta
 # format.
 if inputtype == "fastq":
-    print('input type fastq')
+    print(f'FASTQ format input file: '+ colorama.Fore.YELLOW + '{inputfile}' + colorama.Style.RESET_ALL)
     trimlog = FASTQ.Trim(inputfile, trimmedfastq, barcode, primer5, primer3, trim3, trim5, minimum_read_len,
                          paired=pairedfile, pairedoutputfile=trimmedfastqpaired)
     logging.debug(trimlog)
@@ -308,7 +308,8 @@ if inputtype == "fastq":
         logging.debug(trimlog)
     # run bowtie using trimmed fastq and quality scores (--phred33)
     if pairedfile:
-        print(f'using paired reads from {inputfile} and {pairedfile}')
+        print(f'using paired reads from ' + colorama.Fore.YELLOW + f'{inputfile}'+colorama.Style.RESET_ALL + ' and ' +
+              colorama.Fore.YELLOW + f'{pairedfile}' + colorama.Style.RESET_ALL)
         bowtiecommand = f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -1 {trimmedfastq} -2 {trimmedfastqpaired} ' \
                         f'--fr --no-unal -S {rootname}.sam'
     else:
@@ -316,7 +317,7 @@ if inputtype == "fastq":
                         f'-S {rootname}.sam'
 # trim priers and adapters and filter for length from fasta reads, return trimmed "genomic" sequences in fasta format.
 elif inputtype == "fasta":
-    print('inputtype fasta')
+    print(f'FASTA format input file: ' + colorama.Fore.YELLOW + f'{inputfile}' + colorama.Style.RESET_ALL)
     trimlog = FASTQ.Trim(inputfile, trimmedfasta, barcode, primer5, primer3, trim3, trim5, minimum_read_len,
                          filetype='fasta', paired=pairedfile, pairedoutputfile=trimmedfastapaired)
     logging.debug(trimlog)
@@ -340,7 +341,8 @@ elif inputtype == "fasta":
         logging.debug(trimlog)
     # run bowtie using trimmed fastq and quality scores (--phred33)
     if pairedfile:
-        print(f'using paired reads from {inputfile} and {pairedfile}')
+        print(f'using paired reads from ' + colorama.Fore.YELLOW + f'{inputfile}' + colorama.Style.RESET_ALL +
+              ' and ' + colorama.Fore.YELLOW + f'{pairedfile}' + colorama.Style.RESET_ALL)
         bowtiecommand = f'{bowtielocation} --phred33 -p 4 -x {bowtieindex} -1 {trimmedfasta} ' \
                         f'-2 {trimmedfastapaired} --no-unal -S {rootname}.sam'
     else:
@@ -359,8 +361,8 @@ if mapreads:
           colorama.Style.RESET_ALL + f' and ' + colorama.Fore.YELLOW + f'{rootname}_bowtie.log' +
           colorama.Style.RESET_ALL)
     print(colorama.Fore.CYAN + f'{bowtiecommand}' + colorama.Style.RESET_ALL)
-    logging.debug(
-        f'mapping reads genome using bowtie2. Writing output to' + f' {sam_file}' + f' and ' + f'{rootname}_bowtie.log')
+    logging.debug(f'mapping reads genome using bowtie2. Writing output to' + f' {sam_file}' + f' and ' +
+                  f'{rootname}_bowtie.log')
     logging.debug(f'{bowtiecommand}')
     bowtie = runbin.Command(bowtiecommand)
     bowtieout = bowtie.run(timeout=20000)
@@ -389,7 +391,8 @@ if getseqs:
     recordlist, readslist = getseq.get_seqs(readslist, lwindow, rwindow, samwindow, genome, source=sequencesource)
 
 if writeFASTA:  # write FASTA formatted file with returned sequences
-    print(colorama.Style.RESET_ALL + f'\rWriting fasta file:' + colorama.Fore.GREEN + f' {FASTAfile}')
+    print(colorama.Style.RESET_ALL + f'\rWriting fasta file:' + colorama.Fore.YELLOW + f' {FASTAfile}' +
+          colorama.Style.RESET_ALL)
     Bio.SeqIO.write(recordlist, FASTAfile, "fasta")
 if writelogo:  # dependant on having sequences, optional to make logo plot
     weblogocommand = f'{weblogolocation} -f {FASTAfile} -D fasta -o {logofile} ' \
@@ -408,10 +411,8 @@ if getannotations and len:
         output_writer = csv.writer(output_file, delimiter=",")
         for i in range(len(featurenames)):
             if featuredist[i]:
-                print(
-                    colorama.Style.RESET_ALL + f'mapping insertion site distances to ' + colorama.Fore.YELLOW +
-                    f'{featurenames[i]}' + colorama.Style.RESET_ALL + f' in ' + colorama.Fore.YELLOW +
-                    f'{annotations[i]}' + colorama.Style.RESET_ALL)
+                print(f'mapping insertion site distances to {featurenames[i]} in ' + colorama.Fore.YELLOW +
+                      f'{annotations[i]}' + colorama.Style.RESET_ALL)
                 logging.debug(
                     f'mapping insertion site distances to ' + f'{featurenames[i]}' + f' in ' + f'{annotations[i]}')
                 distances, average, standarddev, median, distancebins, b, message = annotate.closest(ISbamfilename,
@@ -434,15 +435,14 @@ if getannotations and len:
                         summary.append(distancebins[j])
                 except:
                     logging.error("can't write stats. Maybe there were no sequences")
-                    print("can't write stats. Maybe there were no sequences")
+                    print(colorama.Fore.RED + "can't write stats. Maybe there were no sequences" +
+                          colorama.Style.RESET_ALL)
                 with open(distancesfile, 'a+', newline='') as distance_file:
                     dist_writer = csv.writer(distance_file, delimiter=",")
                     dist_writer.writerow(distances)
             else:
-                print(
-                    colorama.Style.RESET_ALL + f'mapping insertion sites to' + colorama.Fore.YELLOW +
-                    f' {featurenames[i]}' + colorama.Style.RESET_ALL + f' in ' + colorama.Fore.YELLOW +
-                    f'{annotations[i]}' + colorama.Style.RESET_ALL)
+                print(f'mapping insertion sites to {featurenames[i]} in ' + colorama.Fore.YELLOW + f'{annotations[i]}' +
+                      colorama.Style.RESET_ALL)
                 logging.debug(f'mapping insertion sites to' + f' {featurenames[i]}' + f' in ' + f'{annotations[i]}')
                 results, message = annotate.featuremap(annotations[i], ISbamfilename, featurenames=featurenames[i],
                                                        single=True, procs=3)
@@ -457,9 +457,8 @@ if getannotations and len:
                 logging.info(message)
 
 programend = time.time()
-message = (
-        colorama.Fore.GREEN + f'Completed all tasks for {rootname} in {int(programend - programstart)} seconds. '
-                              f'Exiting.' + colorama.Style.RESET_ALL)
+message = (colorama.Fore.GREEN + f'Completed all tasks for {rootname} in {int(programend - programstart)} seconds. '
+                                 f'Exiting.' + colorama.Style.RESET_ALL)
 logging.debug(f'Completed all tasks for {rootname} in {int(programend - programstart)} seconds. Exiting.')
 if args.append_summary:
     with open('./summary.csv', 'a') as summary_file:

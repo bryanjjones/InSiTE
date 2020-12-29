@@ -48,12 +48,12 @@ def Trim(inputfile, outputfile, barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='
     elif trim3 > 0 or trim5 > 0:
         cutcommand.append(
             f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 --discard-untrimmed '
-            f'-o ./inprocess/temptrimmed.{filetype} ./{inputfile} --report minima')
+            f'-o ./inprocess/temptrimmed.{filetype} ./{inputfile} --report minimal')
         tempfiles.append(f'./inprocess/temptrimmed.{filetype}')
         if trim3 > 0 and trim5 > 0:  # both trim3 and 5
             cutcommand.append(
                 f'{cutadaptlocation} -u -{trim3} -j 0 -o ./inprocess/temptrimmed1.{filetype} '
-                f'./inprocess/temptrimmed.{filetype} --report minima')
+                f'./inprocess/temptrimmed.{filetype} --report minimal')
             cutcommand.append(
                 f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.{filetype} '
                 f'--report minimal')

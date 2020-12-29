@@ -294,7 +294,7 @@ else:
 # trim primers and adapters and filter for length from raw fastqreads, return trimmed "genomic" sequences in fasta
 # format.
 if inputtype == "fastq":
-    print(f'FASTQ format input file: '+ colorama.Fore.YELLOW + '{inputfile}' + colorama.Style.RESET_ALL)
+    print(f'FASTQ format input file: '+ colorama.Fore.YELLOW + f'{inputfile}' + colorama.Style.RESET_ALL)
     trimlog = FASTQ.Trim(inputfile, trimmedfastq, barcode, primer5, primer3, trim3, trim5, minimum_read_len,
                          paired=pairedfile, pairedoutputfile=trimmedfastqpaired)
     logging.debug(trimlog)

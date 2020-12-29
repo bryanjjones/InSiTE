@@ -55,18 +55,21 @@ def Trim(inputfile, outputfile, barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='
                 f'{cutadaptlocation} -u -{trim3} -j 0 -o ./inprocess/temptrimmed1.{filetype} '
                 f'./inprocess/temptrimmed.{filetype}')
             cutcommand.append(
-                f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.{filetype}')
+                f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.{filetype} '
+                f'--report minimal')
             tempfiles.append(f'./inprocess/temptrimmed1.{filetype}')
         elif trim3 > 0:  # only trim3
             cutcommand.append(
-                f'{cutadaptlocation} -u -{trim3} -j 0 -m {minlen} -o {outputfile}  ./inprocess/temptrimmed.{filetype}')
+                f'{cutadaptlocation} -u -{trim3} -j 0 -m {minlen} -o {outputfile}  ./inprocess/temptrimmed.{filetype} '
+                f'--report minimal')
         else:  # only trim5
             cutcommand.append(
-                f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.{filetype}')
+                f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.{filetype} '
+                f'--report minimal')
     elif len(primer3) > 0 or len(primer5) > 0 or len(barcode5) > 0:
         cutcommand.append(
             f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 -m {minlen} --discard-untrimmed '
-            f'-o {outputfile} ./{inputfile}')
+            f'-o {outputfile} ./{inputfile} --report minimal')
     else:  # no primers, adapters, or trimming
         cutcommand.append(f'{cutadaptlocation} -j 0 -m {minlen} -o {outputfile} ./{inputfile} --report minimal')
 

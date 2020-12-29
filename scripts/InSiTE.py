@@ -453,7 +453,6 @@ if getannotations and len:
                     summary.append(results[1])
                     totalprinted = True
                 output_writer.writerow([f'reads mapped to {featurenames[i]}', results[0]])
-                # summary.append(featurenames[i])
                 summary.append(results[0])
                 logging.info(message)
 

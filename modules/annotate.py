@@ -150,14 +150,13 @@ def featuremap(gff, bam, featurenames=['intron', 'exon'], single=False, save=Fal
         sets = featuresets(gff, featurenames, save=save)
         for feature in sets:
             results.append(count_reads_in_features(None, bam, features=feature))
-
-    # Run count_reads_in_features in parallel over features
-    # total = pybedtools.BedTool(bam).count()
-    # featurenames.append('total')
-    # results.append(total)
     for label, reads in zip(featurenames, results):
         print(colorama.Fore.YELLOW + f'{label}\t{reads:,}' + colorama.Style.RESET_ALL)
         message.append(f'{label}\t{reads:,}')
+    # Run count_reads_in_features in parallel over features
+    total = pybedtools.BedTool(bam).count()
+    featurenames.append('total')
+    results.append(total)
     return results, "\n".join(message)
 
 

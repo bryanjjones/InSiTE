@@ -185,9 +185,7 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
         print(colorama.Style.RESET_ALL + f'Most abundant clone found ' + colorama.Fore.GREEN + f'{abundantlist[0][0]}' +
               colorama.Style.RESET_ALL + f' times, ' + colorama.Fore.GREEN + f'{mostover}% '
               + colorama.Style.RESET_ALL + f'of total reads.')
-        message.append(f'Most abundant clone found ' + colorama.Fore.GREEN + f'{abundantlist[0][0]}' +
-                       colorama.Style.RESET_ALL + ' times, ' + colorama.Fore.GREEN + f'{mostover}%' +
-                       colorama.Style.RESET_ALL + ' of total reads.')
+        message.append(f'Most abundant clone found {abundantlist[0][0]} times, {mostover}% of total reads.')
         topten = 0
         for i in abundantlist[0:10]:
             topten += i[0]

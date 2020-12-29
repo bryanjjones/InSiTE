@@ -89,7 +89,7 @@ def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'com
                 compressedcount += 1
                 compressed.write(semicompressed_readslist[i])
         # add it to the list (with the total count)
-        print(colorama.Fore.GREEN + f'{compressedcount} ' + colorama.Style.RESET_ALL + f' sequences written to ' +
+        print(colorama.Fore.GREEN + f'/n {compressedcount} ' + colorama.Style.RESET_ALL + f' sequences written to ' +
               colorama.Fore.YELLOW + f'{compressedbam}' + colorama.Style.RESET_ALL)
         compressed.close()
     # return compressed_readslist

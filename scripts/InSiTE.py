@@ -50,11 +50,10 @@ distance = [1000, 2000, 4000, 8000, 16000, 32000, 64000]  # distance in bp to be
 write_csv = 1  # write csv (only relevant if reading from sam file)
 writeFASTA = 1  # 1#write a fasta file of all sequences around IS
 writelogo = 1  # 1#create a logo image of consensus sequence # requires getseqs and writeFASTA to be on
-# writevepfile=0#write a vep file to use with vep, either online or by setting getannotations to 1
+
 
 # refrence file locations
 chromosome_ids = './refrence_datasets/chromosomes.csv'
-# veplocation = './ensembl-vep/vep'
 bowtielocation = 'bowtie2'
 bowtieindex = './refrence_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index'
 weblogolocation = 'weblogo'  # in PATH
@@ -135,6 +134,10 @@ if __name__ == "__main__":
     if args.sam:
         inputfile = args.sam
         inputtipe = 'sam'
+    if args.verbose:
+        logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG)
+    else:
+        logging.basicConfig(format='%(message)s', filename=logfile, filemode='w', level=logging.INFO)
     if not bool(args.fasta) + bool(args.fastq) + bool(args.csv) + bool(args.sam) == 1:
         logging.critical('please provide a single input file (fasta/fastq/sam/bam/csv)')
         sys.exit('please provide a single input file (fasta/fastq/sam/bam/csv)')
@@ -176,7 +179,6 @@ if __name__ == "__main__":
     write_csv = not args.supress_csv
     writeFASTA = not args.supress_fasta
     writelogo = not args.supress_logo
-    verbose = args.verbose
 
 # specified file names
 rootname = os.path.splitext(inputfile)[0]
@@ -238,7 +240,6 @@ recordlist = []
 chromIDS = {}
 chromNTS = {}
 programstart = time.time()
-logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG)
 if len(warnings) > 0:
     logging.critical("\n".join(warnings))
 # make a dictionary of chromosome names and ID #s usich chromosomes.csv, which is the table copied from https://www.ncbi.nlm.nih.gov/genome?term=human&cmd=DetailsSearch
@@ -265,8 +266,7 @@ if inputtype == "fastq":
     print('input type fastq')
     trimlog = FASTQ.Trim(inputfile, trimmedfastq, barcode, primer5, primer3, trim3, trim5, minimum_read_len,
                          paired=pairedfile, pairedoutputfile=trimmedfastqpaired)
-    if verbose:
-        logging.info(trimlog)
+    logging.debug(trimlog)
     summary.append(int(len(open(inputfile).readlines()) / 4))  # 4 lines per entry in fastq
     summary.append(int(len(open(trimmedfastq).readlines()) / 4))
     if len(open(trimmedfastq).readlines()) == 0:
@@ -274,8 +274,7 @@ if inputtype == "fastq":
         sys.exit(colorama.Fore.RED + f'No sequences left after trimming. Exiting' + colorama.Style.RESET_ALL)
     if userandomSEQS:  # replace all real reads with random NT
         trimlog = FASTQ.randomize(trimmedfastq, format='fastq')
-        if verbose:
-            logging.info(trimlog)
+        logging.debug(trimlog)
     # run bowtie using trimmed fastq and quality scores (--phred33)
     if pairedfile:
         print(f'using paired reads from {inputfile} and {pairedfile}')
@@ -287,8 +286,7 @@ elif inputtype == "fasta":
     print('inputtype fasta')
     trimlog = FASTQ.Trim(inputfile, trimmedfasta, barcode, primer5, primer3, trim3, trim5, minimum_read_len,
                          filetype='fasta', paired=pairedfile, pairedoutputfile=trimmedfastapaired)
-    if verbose:
-        logging.info(trimlog)
+    logging.debug(trimlog)
     # summary.append('raw sequences')
     with open(inputfile, "r") as fi:
         sequencecounter = 0
@@ -308,8 +306,7 @@ elif inputtype == "fasta":
         sys.exit(colorama.Fore.RED + f'No sequences left after trimming. Exiting' + colorama.Style.RESET_ALL)
     if userandomSEQS:  # replace all real reads with random NT
         trimlog = FASTQ.randomize(trimmedfastq, format='fasta')
-        if verbose:
-            logging.info(trimlog)
+        logging.debug(trimlog)
     # run bowtie using trimmed fastq and quality scores (--phred33)
     if pairedfile:
         print(f'using paired reads from {inputfile} and {pairedfile}')
@@ -325,18 +322,17 @@ elif mapreads:  # if mapreads, but not using fastq, run bowtie specifying fasta 
     # add bowtie mapping function to map plasmid sequences?
     bowtiecommand = f'{bowtielocation} -f -x {bowtieindex} -p 4 -U {fastareads} --no-unal -S {sam_file}'  # 2>&1 | tee {rootname}_bowtie.log'
 if mapreads:
-    print(
-        f'mapping reads genome using bowtie2. Writing output to' + colorama.Fore.YELLOW + f' {sam_file}' + colorama.Style.RESET_ALL + f' and ' + colorama.Fore.YELLOW + f'{rootname}_bowtie.log' + colorama.Style.RESET_ALL)
+    print(f'mapping reads genome using bowtie2. Writing output to' + colorama.Fore.YELLOW + f' {sam_file}' + colorama.Style.RESET_ALL + f' and ' + colorama.Fore.YELLOW + f'{rootname}_bowtie.log' + colorama.Style.RESET_ALL)
     print(colorama.Fore.CYAN + f'{bowtiecommand}' + colorama.Style.RESET_ALL)
-    logging.info(
+    logging.debug(
         f'mapping reads genome using bowtie2. Writing output to' + f' {sam_file}' + f' and ' + f'{rootname}_bowtie.log')
-    logging.info(f'{bowtiecommand}')
+    logging.debug(f'{bowtiecommand}')
     bowtie = runbin.Command(bowtiecommand)
     bowtieout = bowtie.run(timeout=20000)
     print(bowtieout[1].decode())
     print(f'{bowtieout[2].decode()}')
-    logging.info(bowtieout[1].decode())
-    logging.info(bowtieout[2].decode())
+    logging.debug(bowtieout[1].decode())
+    logging.debug(bowtieout[2].decode())
 
 if inputtype == "sam" or mapreads:
     readslist, unmapped, message = mappedreads.read_sam(sam_file, chromIDS, ISbamfilename, compressreads=compressreads,
@@ -349,11 +345,11 @@ if inputtype == "sam" or mapreads:
         alignedcount += 1
     # alignedcount=alignedcount-len(unmapped)#remove unmapped reads from list of reads
     summary.append(alignedcount)
-    logging.info(f'{alignedcount} reads mapped.')
-    logging.info(message)
+    logging.debug(f'{alignedcount} reads mapped.')
+    logging.debug(message)
 if write_csv:
     message = mappedreads.write_csv(readslist, genome_location_csv)
-    logging.info(message)
+    logging.debug(message)
 
 # Chrom,Sense,Loc,Gene,Total # IS Sequences Found,Total # IS Found,Plasmid m995,Sample1,Sample2,Sample3,Sample4
 
@@ -367,8 +363,8 @@ if writelogo:  # dependant on having sequences, optional to make logo plot
     weblogocommand = f'{weblogolocation} -f {FASTAfile} -D fasta -o {logofile} -F svg -A dna -F png --resolution 600 -s large -c classic -i {str(int(1 - 1 * lwindow))} -l -10 -u 10 '  # -l [lower bound] -u [upper bound]
     print(colorama.Style.RESET_ALL + f'Writing logo')
     print(colorama.Fore.YELLOW + f'{weblogocommand}' + colorama.Style.RESET_ALL)
-    logging.info(f'Writing logo')
-    logging.info(f'{weblogocommand}')
+    logging.debug(f'Writing logo')
+    logging.debug(f'{weblogocommand}')
     logocommand = runbin.Command(weblogocommand)
     logoout = logocommand.run(timeout=1800)
 
@@ -409,7 +405,7 @@ if getannotations and len:
             else:
                 print(
                     colorama.Style.RESET_ALL + f'mapping insertion sites to' + colorama.Fore.YELLOW + f' {featurenames[i]}' + colorama.Style.RESET_ALL + f' in ' + colorama.Fore.YELLOW + f'{annotations[i]}' + colorama.Style.RESET_ALL)
-                logging.info(f'mapping insertion sites to' + f' {featurenames[i]}' + f' in ' + f'{annotations[i]}')
+                logging.debug(f'mapping insertion sites to' + f' {featurenames[i]}' + f' in ' + f'{annotations[i]}')
                 results, message = annotate.featuremap(annotations[i], ISbamfilename, featurenames=featurenames[i],
                                                        single=True, procs=3)
                 if not totalprinted:  # featuremap returns total reads, add this line only once as it should be the same for each feature.
@@ -425,10 +421,9 @@ if getannotations and len:
 programend = time.time()
 message = (
         colorama.Fore.GREEN + f'Completed all tasks for {rootname} in {int(programend - programstart)} seconds. Exiting.' + colorama.Style.RESET_ALL)
-logging.info(f'Completed all tasks for {rootname} in {int(programend - programstart)} seconds. Exiting.')
+logging.debug(f'Completed all tasks for {rootname} in {int(programend - programstart)} seconds. Exiting.')
 if args.append_summary:
     with open('./summary.csv', 'a') as summary_file:
         csv.writer(summary_file, delimiter=',').writerow(summary)
-
 print(message)
 exit()

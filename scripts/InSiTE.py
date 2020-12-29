@@ -379,7 +379,7 @@ if inputtype == "sam" or mapreads:
     for i in sam:
         alignedcount += 1
     summary.append(alignedcount)
-    logging.info(f'{alignedcount} reads mapped.')
+    # logging.info(f'{alignedcount} reads mapped.')
     logging.info(message)
 if write_csv:
     message = mappedreads.write_csv(readslist, genome_location_csv)

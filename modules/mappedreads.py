@@ -169,6 +169,11 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
             count = 1
         readslist.append(read_csv_line(
             [chrom, sense, address, '', count, '', '', '', '', '', '']))
+    print(colorama.Fore.YELLOW + f'{entries}' + colorama.Style.RESET_ALL + f' reads in sam file. '
+          + colorama.Fore.YELLOW + f'{len(readslist)}' + colorama.Style.RESET_ALL + f' were mapped to a chromosome, '
+          + colorama.Fore.YELLOW + f'{len(unmapped)} ' + colorama.Style.RESET_ALL + f'did not map to a chromosome.')
+    message.append(f'{entries} reads in sam file. {entries - len(unmapped)} were mapped to a chromosome, '
+                   f'{len(unmapped)} did not map to a chromosome.')
     if abundant and compressreads:  # if abundant filename given, sort reads by most abundant,
         # and write to that file as bam file
         abundantbamfile = pysam.AlignmentFile(abundant, 'wb', template=ISbamfile)
@@ -189,7 +194,7 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
         print(
             colorama.Fore.GREEN + f'Writing bam file sorted by read count: ' + colorama.Style.RESET_ALL + f'{abundant}')
         message.append(f'Top ten most abundant clones found a total of {topten} times, {toptenpct}% of total reads.')
-        message.append(f'Writing bam file sorted by read count: {abundant}')
+        #message.append(f'Writing bam file sorted by read count: {abundant}')
         for i in abundantlist:
             abundantbamfile.write(i[1])
         abundantbamfile.close()
@@ -197,11 +202,6 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
         print(colorama.Fore.RED + f'Need to count reads to calculate most abundant sequences. If you want abundant '
                                   f'sequences, please specify compressreads too.' + colorama.Style.RESET_ALL)
 
-    print(colorama.Fore.YELLOW + f'{entries}' + colorama.Style.RESET_ALL + f' reads in sam file. '
-          + colorama.Fore.YELLOW + f'{len(readslist)}' + colorama.Style.RESET_ALL + f' were mapped to a chromosome, '
-          + colorama.Fore.YELLOW + f'{len(unmapped)} ' + colorama.Style.RESET_ALL + f'did not map to a chromosome.')
-    message.append(f'{entries} reads in sam file. {entries - len(unmapped)} were mapped to a chromosome, '
-                   f'{len(unmapped)} did not map to a chromosome.')
     ISbamfile.close()
     return readslist, unmapped, "\n".join(message)  # ISbamfile
 

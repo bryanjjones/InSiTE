@@ -13,7 +13,7 @@ cutadaptlocation = 'cutadapt'
 
 def QtoA(inputfile, outputfile, Ltrim=0, trim=0):
     seqs = []  # Bio.SeqIO.read(inputfile, "fastq")
-    print(colorama.Fore.CYAN + f'reading {inputfile}' + colorama.Style.RESET_ALL)
+    print(f'Reading ' + colorama.Fore.YELLOW + f'{inputfile}' + colorama.Style.RESET_ALL)
     for record in Bio.SeqIO.parse(inputfile, "fastq"):
         if trim:  # if trimming is indicated
             trimmed = record.seq[Ltrim:trim]  # trim record to indicated range
@@ -21,10 +21,10 @@ def QtoA(inputfile, outputfile, Ltrim=0, trim=0):
             record.seq = trimmed  # reasign record.seq to newly trimmed sequence
         print(
             colorama.Fore.BLUE + f'{record.seq[:20]}...{record.seq[-20:]} ' + colorama.Style.RESET_ALL +
-            f' sequnce number ' + colorama.Fore.YELLOW + f'{len(seqs):,}' + colorama.Style.RESET_ALL,
+            f' sequnce number ' + colorama.Fore.GREEN + f'{len(seqs):,}' + colorama.Style.RESET_ALL,
             end="\r")
         seqs.append(record)
-    print(colorama.Fore.CYAN + f'writing {outputfile}' + colorama.Style.RESET_ALL)
+    print(f'writing ' + colorama.Fore.YELLOW + f'{outputfile}' + colorama.Style.RESET_ALL)
     Bio.SeqIO.write(seqs, outputfile, "fasta")  # "./inprocess/"+
     return seqs
 
@@ -71,7 +71,8 @@ def Trim(inputfile, outputfile, barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='
     else:  # no primers, adapters, or trimming
         cutcommand.append(f'{cutadaptlocation} -j 0 -m {minlen} -o {outputfile} ./{inputfile} --report minimal')
 
-    print(f'cutting adapters/primers/barcods from reads using cutadapt. Writting output to {outputfile}')
+    print(f'cutting adapters/primers/barcods from reads using cutadapt. Writting output to ' + colorama.Fore.YELLOW +
+          f'{outputfile}')
     for command in cutcommand:
         print(colorama.Fore.CYAN + f'{command}' + colorama.Style.RESET_ALL)
         message.append(f'cutting adapters/primers/barcods from reads using cutadapt. Writting output to {outputfile}')
@@ -87,7 +88,7 @@ def Trim(inputfile, outputfile, barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='
         try:
             os.remove(file)
         except:
-            print(colorama.Fore.RED + f"couldn't remove {file}" + colorama.Style.RESET_ALL)
+            print(colorama.Fore.RED + f"couldn't remove " + colorama.Fore.YELLOW + f"{file}" + colorama.Style.RESET_ALL)
             message.append(f"couldn't remove {file}")
     return "\n".join(message)
 
@@ -103,10 +104,9 @@ def randomize(filename, format='fasta'):
             randseq = randseq + random.choice("ACTG")
         record.seq = Bio.Seq.Seq(randseq)
         print(
-            f'randomizing records:' + colorama.Fore.BLUE + f' {record.seq[:20]}...{record.seq[-20:]}' +
-            colorama.Style.RESET_ALL + f' sequnce number ' + colorama.Fore.YELLOW + f'{len(seqs):,}' +
-            colorama.Style.RESET_ALL,
-            end="\r")
+            colorama.Fore.MAGENTA + 'randomizing records:' + colorama.Fore.BLUE +
+            f' {record.seq[:20]}...{record.seq[-20:]}' + colorama.Fore.MAGENTA + f' sequnce number {len(seqs):,}' +
+            colorama.Style.RESET_ALL, end="\r")
         seqs.append(record)
     print(f'\rrewriting' + colorama.Fore.YELLOW + f' {filename}' + colorama.Style.RESET_ALL)
     message.append(f'\rrewriting' + f' {filename}')

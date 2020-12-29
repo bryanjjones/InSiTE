@@ -38,7 +38,9 @@ class read_csv_line(object):
 def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'compressed_{bamfile}',
     if not compressedbam:  # if not given a new file name, overwrite existing bam file
         compressedbam = bamfile
-    print(f'compressing duplicate reads in {bamfile}. Writing compressed list with counts to {compressedbam}.')
+    print(f'compressing duplicate reads in ' + colorama.Fore.YELLOW + f'{bamfile}' + colorama.Style.RESET_ALL
+          + '. Writing compressed list with counts to ' + colorama.Fore.YELLOW + f'{compressedbam}.'
+          + colorama.Style.RESET_ALL)
     semicompressed_readslist = []
     compressed_readslist = []
     expanded = pysam.AlignmentFile(bamfile, 'rb')
@@ -69,10 +71,10 @@ def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'com
                     semicompressed_readslist[
                         i + 1].reference_name:  # if this read isn't the last one and if it's the same as the next one
                 print(
-                    colorama.Style.RESET_ALL + f'merging adjacent read locations. read ' + colorama.Fore.YELLOW +
-                    f'{i}' + colorama.Style.RESET_ALL + ', locations ' + colorama.Fore.YELLOW +
+                    f'merging adjacent read locations. read ' + colorama.Fore.GREEN + f'{i}' +
+                    colorama.Style.RESET_ALL + ', locations ' + colorama.Fore.GREEN +
                     f'{semicompressed_readslist[i].pos} ' + colorama.Style.RESET_ALL + ' and ' +
-                    colorama.Fore.YELLOW + f'{semicompressed_readslist[i + 1].pos}.',
+                    colorama.Fore.GREEN + f'{semicompressed_readslist[i + 1].pos}' + colorama.Style.RESET_ALL,
                     end="\r")
                 if semicompressed_readslist[i].get_tag('IH') > semicompressed_readslist[i + 1].get_tag('IH'):
                     semicompressed_readslist[i + 1].pos = semicompressed_readslist[
@@ -82,14 +84,13 @@ def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'com
                 semicompressed_readslist[i + 1].set_tag('IH', summedreads)
             else:
                 print(
-                    colorama.Style.RESET_ALL + f'adding line ' + colorama.Fore.YELLOW + f'{i}' +
-                    colorama.Style.RESET_ALL + f' to compressed {compressedbam}',
-                    end="\r")
+                    f'adding line ' + colorama.Fore.GREEN + f'{i}' + colorama.Style.RESET_ALL + f' to compressed ' +
+                    colorama.Fore.YELLOW + f'{compressedbam}' + colorama.Style.RESET_ALL, end="\r")
                 compressedcount += 1
                 compressed.write(semicompressed_readslist[i])
-            # compressed_readslist.append(semicompressed_readslist[i]) #if it's different than the next one,
         # add it to the list (with the total count)
-        print(f'{compressedcount} sequences written to {compressedbam}')
+        print(colorama.Fore.GREEN + f'{compressedcount} ' + colorama.Style.RESET_ALL + f' sequences written to ' +
+              colorama.Fore.YELLOW + f'{compressedbam}' + colorama.Style.RESET_ALL)
         compressed.close()
     # return compressed_readslist
     else:
@@ -105,11 +106,11 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
     message = []
     samfile = pysam.AlignmentFile(sam_file, 'r')
     ISbamfile = pysam.AlignmentFile(ISbamfilename, 'wb', template=samfile)
-    print(colorama.Fore.GREEN + f'Reading sam file: ' + colorama.Style.RESET_ALL + f' {sam_file}')
+    print(f'Reading sam file: ' + colorama.Fore.YELLOW + f' {sam_file}' + colorama.Style.RESET_ALL)
     if randomize:
         print(colorama.Fore.MAGENTA + f'Randomizing sequence locations.' + colorama.Style.RESET_ALL)
         message.append(f'Randomizing sequence locations.')
-    print(colorama.Fore.GREEN + f'Writing bam file: ' + colorama.Style.RESET_ALL + f' {ISbamfilename}')
+    print(f'Writing bam file: ' + colorama.Fore.YELLOW + f' {ISbamfilename}' + colorama.Style.RESET_ALL)
     readslist = []
     recordlist = []
     unmapped = []
@@ -169,32 +170,33 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
             count = 1
         readslist.append(read_csv_line(
             [chrom, sense, address, '', count, '', '', '', '', '', '']))
-    print(colorama.Fore.YELLOW + f'{entries}' + colorama.Style.RESET_ALL + f' reads in sam file. '
-          + colorama.Fore.YELLOW + f'{len(readslist)}' + colorama.Style.RESET_ALL + f' were mapped to a chromosome, '
-          + colorama.Fore.YELLOW + f'{len(unmapped)} ' + colorama.Style.RESET_ALL + f'did not map to a chromosome.')
-    message.append(f'{entries} reads in sam file. {entries - len(unmapped)} were mapped to a chromosome, '
+    print(colorama.Fore.GREEN + f'{entries}' + colorama.Style.RESET_ALL + f' usable reads. '
+          + colorama.Fore.GREEN + f'{len(readslist)}' + colorama.Style.RESET_ALL + f' were mapped to a chromosome, '
+          + colorama.Fore.GREEN + f'{len(unmapped)} ' + colorama.Style.RESET_ALL + f'did not map to a chromosome.')
+    message.append(f'{entries} usable reads. {entries - len(unmapped)} were mapped to a chromosome, '
                    f'{len(unmapped)} did not map to a chromosome.')
     if abundant and compressreads:  # if abundant filename given, sort reads by most abundant,
         # and write to that file as bam file
         abundantbamfile = pysam.AlignmentFile(abundant, 'wb', template=ISbamfile)
         abundantlist.sort(key=lambda tup: tup[0], reverse=True)
         mostover = round((100 * abundantlist[0][0] / entries), 3)
-        print(
-            colorama.Style.RESET_ALL + f'Most abundant clone found ' + colorama.Fore.YELLOW + f'{abundantlist[0][0]}' +
-            colorama.Style.RESET_ALL + f' times, ' + colorama.Fore.YELLOW + f'{mostover}% ' + colorama.Style.RESET_ALL +
-            f'of total reads.')
-        message.append(f'Most abundant clone found {abundantlist[0][0]} times, {mostover}% of total reads.')
+        print(colorama.Style.RESET_ALL + f'Most abundant clone found ' + colorama.Fore.GREEN + f'{abundantlist[0][0]}' +
+              colorama.Style.RESET_ALL + f' times, ' + colorama.Fore.GREEN + f'{mostover}% '
+              + colorama.Style.RESET_ALL + f'of total reads.')
+        message.append(f'Most abundant clone found ' + colorama.Fore.GREEN + f'{abundantlist[0][0]}' +
+                       colorama.Style.RESET_ALL + ' times, ' + colorama.Fore.GREEN + f'{mostover}%' +
+                       colorama.Style.RESET_ALL + ' of total reads.')
         topten = 0
         for i in abundantlist[0:10]:
             topten += i[0]
         toptenpct = round(100 * (topten / entries), 3)
-        print(colorama.Style.RESET_ALL + f'Top ten most abundant clones found a total of ' + colorama.Fore.YELLOW +
-              f'{topten}' + colorama.Style.RESET_ALL + f' times, ' + colorama.Fore.YELLOW + f'{toptenpct}% ' +
+        print(f'Top ten most abundant clones found a total of ' + colorama.Fore.GREEN + f'{topten}' +
+              colorama.Style.RESET_ALL + f' times, ' + colorama.Fore.GREEN + f'{toptenpct}% ' +
               colorama.Style.RESET_ALL + f'of total reads.')
-        print(
-            colorama.Fore.GREEN + f'Writing bam file sorted by read count: ' + colorama.Style.RESET_ALL + f'{abundant}')
+        print(f'Writing bam file sorted by read count: ' + colorama.Fore.YELLOW + f'{abundant}' +
+              colorama.Style.RESET_ALL)
         message.append(f'Top ten most abundant clones found a total of {topten} times, {toptenpct}% of total reads.')
-        #message.append(f'Writing bam file sorted by read count: {abundant}')
+        # message.append(f'Writing bam file sorted by read count: {abundant}')
         for i in abundantlist:
             abundantbamfile.write(i[1])
         abundantbamfile.close()
@@ -209,7 +211,7 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
 # if write_csv:
 def write_csv(readslist, mapped_csv_file):
     message = []
-    print(colorama.Style.RESET_ALL + f'Writing reads to csv file: ' + colorama.Fore.YELLOW + f'{mapped_csv_file}')
+    print(f'Writing reads to csv file: ' + colorama.Fore.YELLOW + f'{mapped_csv_file}' + colorama.Style.RESET_ALL)
     message.append(f'Writing reads to csv file: ' + f'{mapped_csv_file}')
     with open(mapped_csv_file, "w", newline="") as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=',')  # comma delimited csv file
@@ -230,7 +232,7 @@ def write_csv(readslist, mapped_csv_file):
 # if read_csv:
 def read_csv(mapped_csv_file, random=False):
     message = []
-    print(colorama.Style.RESET_ALL + f'reading data from ' + colorama.Style.GREEN + f'{mapped_csv_file}', end="\r")
+    print(f'reading data from ' + colorama.Fore.YELLOW + f'{mapped_csv_file}' + colorama.Style.RESET_ALL, end="\r")
     message.append(f'reading data from ' + f'{mapped_csv_file}')
     reads = []
     recordlist = []
@@ -239,20 +241,21 @@ def read_csv(mapped_csv_file, random=False):
         line_count = 1
         for row in csv_reader:
             if line_count < 4:  # first 4 lines are headders
-                if line_count == 1: print(colorama.Fore.YELLOW + f'Column names are {", ".join(row)}')
+                if line_count == 1:
+                    print(f'Column names are ' + colorama.Fore.GREEN + '{", ".join(row)}' + colorama.Style.RESET_ALL)
                 line_count += 1
             else:  # read data from each line
                 thisrow = read_csv_line(row, userandomIS=random)
                 reads.append(thisrow)
                 recordlist.append(thisrow.record)
                 print(
-                    colorama.Style.RESET_ALL + f'Sequence {line_count - 3} ' + colorama.Style.RESET_ALL +
+                    f'Sequence ' + colorama.Fore.BLUE + f'{line_count - 3} ' + colorama.Style.RESET_ALL +
                     'found at chrom ' + colorama.Style.GREEN + f'{thisrow.chrom}' + colorama.Style.RESET_ALL +
-                    ' with ' + colorama.Style.ORANGE + f'{thisrow.sense}' + colorama.Style.RESET_ALL + ' sense ' +
-                    colorama.Style.YELLOW + f'{thisrow.loc} ' + colorama.Style.RESET_ALL + 'with sequence ' +
-                    colorama.Style.BLUE + f'{thisrow.sequence[:5]}...{thisrow.sequence[-5:]}',
-                    end="\r")
+                    ' with ' + colorama.Style.GREEN + f'{thisrow.sense}' + colorama.Style.RESET_ALL + ' sense ' +
+                    colorama.Style.GREEN + f'{thisrow.loc} ' + colorama.Style.RESET_ALL + 'with sequence ' +
+                    colorama.Style.BLUE + f'{thisrow.sequence[:5]}...{thisrow.sequence[-5:]}'
+                    + colorama.Style.RESET_ALL, end="\r")
                 line_count += 1
-        print(f'Processed {line_count} lines.')
+        print(f'Processed ' + colorama.Fore.GREEN + f'{line_count}' + colorama.Style.RESET_ALL + ' lines.')
         message.append(f'Processed {line_count} lines.')
     return reads, message

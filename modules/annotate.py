@@ -96,8 +96,6 @@ def closest(queryfilename, refrencefilename, featurename='TSS', position="start"
     # if position is start, make a duplicate refrence site with only startsite nt
     if position == 'start':
         refrence = refrence.each(startsite).sort().saveas()
-    # transcripts=pybedtools.BedTool('./refrence_datasets/annotations/gencode.v32.transcript.gtf')
-    # query=pybedtools.BedTool('./05IS.bam')
     b = query.closest(refrence, d=True, t="first")
     for i in b:  # make list of distances
         distancelist.append(i.count)

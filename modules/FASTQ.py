@@ -1,6 +1,4 @@
 #!/home/notal/anaconda3/bin/python3
-# !/usr/bin/python3
-# import _mypath
 import os
 import Bio.SeqIO
 import Bio.Entrez
@@ -95,7 +93,7 @@ def Trim(inputfile, outputfile, barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='
 
 
 def randomize(filename, format='fasta'):
-    seqs = []  # Bio.SeqIO.read(inputfile, "fastq")
+    seqs = []
     message = []
     print(f'reading ' + colorama.Fore.YELLOW + f'{filename}' + colorama.Style.RESET_ALL)
     message.append(f'reading ' + f'{filename}')
@@ -112,7 +110,7 @@ def randomize(filename, format='fasta'):
         seqs.append(record)
     print(f'\rrewriting' + colorama.Fore.YELLOW + f' {filename}' + colorama.Style.RESET_ALL)
     message.append(f'\rrewriting' + f' {filename}')
-    Bio.SeqIO.write(seqs, filename, format)  # "./inprocess/"+
+    Bio.SeqIO.write(seqs, filename, format)
     return message
 
 

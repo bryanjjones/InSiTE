@@ -449,7 +449,6 @@ if getannotations and len:
                 if not totalprinted:  # featuremap returns total reads, add this line only once as it should be the
                     # same for each feature.
                     output_writer.writerow([f'total reads', results[1]])
-                    # summary.append('reads mapped to genome')
                     summary.append(results[1])
                     totalprinted = True
                 output_writer.writerow([f'reads mapped to {featurenames[i]}', results[0]])

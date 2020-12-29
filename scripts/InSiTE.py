@@ -44,7 +44,7 @@ primer3 = ''  # 3' primer sequence to remove from reads
 trim5 = 0  # additional (non-genomic) nts to trim off of 3' end of reads #21
 trim3 = 0  # additional (non-genomic) nts to trim off of 5' end of reads (starts with TA) #16
 featurenames = ['intron', 'exon', 'codingexon', 'transcript',
-                'TSS']  # feature names found in feature files to map reads to
+                'Transcriptional_Start_Site']  # feature names found in feature files to map reads to
 featuredist = [False, False, False, False,
                True]  # weather to map distance of each read, or only whether reads overlap with feature
 distance = [1000, 2000, 4000, 8000, 16000, 32000, 64000]  # distance in bp to be considered close to feature
@@ -396,7 +396,7 @@ if writelogo:  # dependant on having sequences, optional to make logo plot
                      f'-F svg -A dna -F png --resolution 600 -s large -c classic -i {str(int(1 - 1 * lwindow))} ' \
                      f'-l -10 -u 10 '
     print(colorama.Style.RESET_ALL + f'Writing logo')
-    print(colorama.Fore.YELLOW + f'{weblogocommand}' + colorama.Style.RESET_ALL)
+    print(colorama.Fore.CYAN + f'{weblogocommand}' + colorama.Style.RESET_ALL)
     logging.debug(f'Writing logo')
     logging.debug(f'{weblogocommand}')
     logocommand = runbin.Command(weblogocommand)

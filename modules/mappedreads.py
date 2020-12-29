@@ -74,7 +74,8 @@ def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'com
                     f'merging adjacent read locations. read ' + colorama.Fore.GREEN + f'{i}' +
                     colorama.Style.RESET_ALL + ', locations ' + colorama.Fore.GREEN +
                     f'{semicompressed_readslist[i].pos} ' + colorama.Style.RESET_ALL + ' and ' +
-                    colorama.Fore.GREEN + f'{semicompressed_readslist[i + 1].pos}' + colorama.Style.RESET_ALL,
+                    colorama.Fore.GREEN + f'{semicompressed_readslist[i + 1].pos}                    ' +
+                    colorama.Style.RESET_ALL,
                     end="\r")
                 if semicompressed_readslist[i].get_tag('IH') > semicompressed_readslist[i + 1].get_tag('IH'):
                     semicompressed_readslist[i + 1].pos = semicompressed_readslist[
@@ -85,7 +86,7 @@ def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'com
             else:
                 print(
                     f'adding line ' + colorama.Fore.GREEN + f'{i}' + colorama.Style.RESET_ALL + f' to compressed ' +
-                    colorama.Fore.YELLOW + f'{compressedbam}' + colorama.Style.RESET_ALL, end="\r")
+                    colorama.Fore.YELLOW + f'{compressedbam}                    ' + colorama.Style.RESET_ALL, end="\r")
                 compressedcount += 1
                 compressed.write(semicompressed_readslist[i])
         # add it to the list (with the total count)

@@ -8,8 +8,6 @@ import runbin
 import random
 import colorama
 
-cutadaptlocation = 'cutadapt'
-
 
 def QtoA(inputfile, outputfile, Ltrim=0, trim=0):
     seqs = []  # Bio.SeqIO.read(inputfile, "fastq")
@@ -29,21 +27,39 @@ def QtoA(inputfile, outputfile, Ltrim=0, trim=0):
     return seqs
 
 
+def merge_pairs(in1, in2, out, bbmerge_location='./bins/bbmap/bbmerge-auto.sh'):
+    message = []
+    bbmerge_command = bbmerge_location
+    merge_out = os.path.splitext(in1)[0]+'_merge'+os.path.splitext(in1)[1]
+    unmerge_out1 = os.path.splitext(in1)[0]+'_unmerge'+os.path.splitext(in1)[1]
+    unmerge_out2 = os.path.splitext(in2)[0]+'_unmerge'+os.path.splitext(in2)[1]
+    for file in [out, merge_out, unmerge_out1, unmerge_out2]:
+        if os.path.exists(file):
+            os.remove(file)
+    bbmerge_command += f' in1={in1} in2={in2} out={merge_out} outu1={unmerge_out1} outu2={unmerge_out2}'
+    print(f'{bbmerge_command}')
+    bbmerge = runbin.Command(bbmerge_command)
+    run = bbmerge.run(timeout=2000)
+    print(run[1].decode())
+    print(run[2].decode())
+    filenames = [merge_out, unmerge_out1, unmerge_out2]
+    with open(out, 'w') as outfile:
+        for fname in filenames:
+            with open(fname) as infile:
+                for line in infile:
+                    outfile.write(line)
+    for tempfile in [merge_out, unmerge_out1, unmerge_out2]:
+        os.remove(tempfile)
+
+
 def Trim(inputfile, outputfile, barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='CCTAACTGCTGTGCCACT', trim3=16, trim5=21,
-         minlen=10, filetype='fastq', paired=None, pairedoutputfile=None):
+         minlen=10, filetype='fastq', paired=None, pairedoutputfile=None, cutadaptlocation='cutadapt'):
     if not pairedoutputfile:
         pairedoutputfile = f'{outputfile}.pairs'
     message = []
     cutcommand = []
     tempfiles = []
-    if paired:  # if file is specified for paired end reads, treat primer3 as the primer for the paired reads.
-        pri3 = Bio.Seq.Seq(primer3)
-        pri5 = Bio.Seq.Seq(primer5)
-        cutcommand.append(
-            f'{cutadaptlocation} -a ^{barcode5}{pri5}...{pri3.reverse_complement()} -A {pri3}...'
-            f'{pri5.reverse_complement()} -j 0 -m {minlen} --discard-untrimmed -o {outputfile} -p {pairedoutputfile} '
-            f'./{inputfile} ./{paired} --report minimal')
-    elif trim3 > 0 or trim5 > 0:
+    if trim3 > 0 or trim5 > 0:
         cutcommand.append(
             f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 --discard-untrimmed '
             f'-o ./inprocess/temptrimmed.{filetype} ./{inputfile} --report minimal')
@@ -65,9 +81,19 @@ def Trim(inputfile, outputfile, barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='
                 f'{cutadaptlocation} -u {trim5} -j 0 -m {minlen} -o {outputfile} ./inprocess/temptrimmed1.{filetype} '
                 f'--report minimal')
     elif len(primer3) > 0 or len(primer5) > 0 or len(barcode5) > 0:
-        cutcommand.append(
-            f'{cutadaptlocation} -a ^{barcode5}{primer5}...{primer3} -j 0 -m {minlen} --discard-untrimmed '
-            f'-o {outputfile} ./{inputfile} --report minimal')
+        if len(primer3) > 0:
+            if len(primer5) + len(barcode5) > 0:
+                cutcommand.append(
+                    f'{cutadaptlocation} -a {barcode5}{primer5}...{primer3} -j 0 -m {minlen} --discard-untrimmed '
+                    f'--revcomp -O 17 -o {outputfile} ./{inputfile} --report minimal')
+            else:
+                cutcommand.append(
+                    f'{cutadaptlocation} -a {primer3} -j 0 -O 17 -m {minlen} --discard-untrimmed '
+                    f'--revcomp -o {outputfile} ./{inputfile} --report minimal')
+        else:
+            cutcommand.append(
+                f'{cutadaptlocation} -g {barcode5}{primer5} -O 17 -j 0 -m {minlen} --discard-untrimmed '
+                f'--revcomp -o {outputfile} ./{inputfile} --report minimal')
     else:  # no primers, adapters, or trimming
         cutcommand.append(f'{cutadaptlocation} -j 0 -m {minlen} -o {outputfile} ./{inputfile} --report minimal')
 

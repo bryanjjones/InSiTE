@@ -4,9 +4,20 @@ import pysam
 import colorama
 import Bio
 import Bio.Entrez
+import Bio.Seq
 import Bio.SeqIO
 import random
+import os
+
 from operator import attrgetter
+
+aligner = Bio.Align.PairwiseAligner()
+aligner.mode = 'local'
+aligner.open_gap_score = -2
+aligner.extend_gap_score = -1
+
+
+# aligner.mismatch_score = .01
 
 
 # read take a given string, formatted as row read from a csv file, and return an object with useful properties
@@ -32,21 +43,72 @@ class read_csv_line(object):
         self.sequence = '-'
 
 
+def filter_vector(vector_file, reads, filetype="fasta", trimmed_file=None, score=.8):
+    vector_tallies = []
+    trimmed_reads = []
+    vectors = list(Bio.SeqIO.parse(vector_file, "fasta"))
+    for vector in vectors:
+        vector_tallies.append([vector.name, 0])
+    reads = Bio.SeqIO.parse(reads, filetype)
+    read_count = 0
+    for read in reads:
+        read_count += 1
+        alignments = []
+        for vector in vectors:
+            alignments.append(max(aligner.align(read.seq, vector.seq).score,
+                                  aligner.align(Bio.Seq.reverse_complement(read.seq), vector.seq).score))
+        if max(alignments) > len(read.seq) * score:
+            for i in range(len(alignments)):
+                if alignments[i] == max(alignments):
+                    vector_tallies[i][1] += 1
+                    print(f'read number {read_count} mapped to {vector_tallies[i][0]}', end='\r')
+        else:
+            trimmed_reads.append(read)
+            print(f'read number {read_count} passes', end='\r')
+    print("\n")
+    # biopython read vectors file
+    # pairwise align each seq to each vector (fwd and rev)
+    # if good match, add to tally for particular vector (how to pick?) and remove from further analysis,
+    # otherwise pass it along
+    filtered_reads = len(trimmed_reads)
+    if trimmed_file:
+        Bio.SeqIO.write(trimmed_reads, trimmed_file, filetype)
+        return vector_tallies, filtered_reads
+    else:
+        return vector_tallies, filtered_reads, trimmed_reads
+
+
 # if compressedreads:
 # compress a sorted readlist by merging identical locations and, if adjacent=True, merging adjacent locations too
 # (merges to location with greatest count)
 def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'compressed_{bamfile}',
+
     if not compressedbam:  # if not given a new file name, overwrite existing bam file
         compressedbam = bamfile
+    pysam.sort("-o", bamfile, compressedbam)
+
+    rev_reads = []
+    fwd_reads = []
+    # expanded = pysam.AlignmentFile(compressedbam, 'rb')
+    # for entry in expanded:
+    #
     print(f'compressing duplicate reads in ' + colorama.Fore.YELLOW + f'{bamfile}' + colorama.Style.RESET_ALL
           + '. Writing compressed list with counts to ' + colorama.Fore.YELLOW + f'{compressedbam}.'
           + colorama.Style.RESET_ALL)
     semicompressed_readslist = []
     compressed_readslist = []
-    expanded = pysam.AlignmentFile(bamfile, 'rb')
-
-    previous = None
+    expanded = pysam.AlignmentFile(compressedbam, 'rb')
+    # sort reads by orientation
     for entry in expanded:  # merge
+        if entry.is_reverse:
+            rev_reads.append(entry)
+        else:
+            fwd_reads.append(entry)
+    compressed = pysam.AlignmentFile(compressedbam, 'wb', template=expanded)
+    expanded.close()
+    reads_list = fwd_reads + rev_reads
+    previous = None
+    for entry in reads_list:  # merge
         entry.set_tag('IH', 1)
         if previous:
             if previous.pos == entry.pos:  # if this entry matches the previous one, add one to previous, and
@@ -61,8 +123,7 @@ def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'com
         else:
             previous = entry
     semicompressed_readslist.append(previous)  # write the last read to compressed
-    compressed = pysam.AlignmentFile(compressedbam, 'wb', template=expanded)
-    expanded.close()
+    # expanded.close()
     if adjacent:
         compressedcount = 0
         for i in range(len(semicompressed_readslist)):
@@ -99,6 +160,7 @@ def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'com
         for i in semicompressed_readslist:
             compressed.write(i)
         compressed.close()
+    pysam.sort("-o", compressedbam, compressedbam)  #sort to order by position (not orientation)
     # return semicompressed_readslist
 
 
@@ -122,7 +184,7 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
     for entry in samfile:
         entries += 1
         if entry.reference_name and (entry.reference_name[
-                                     3:] in chromIDS.keys()):  # check if read has a refrence to a chromosome,
+                                     3:] in chromIDS.keys()):  # check if read has a reference to a chromosome,
             # otherwise ignore (i.e. unmapped reads)
             if entry.is_reverse:
                 sense = "-"
@@ -179,13 +241,14 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
                    f'{len(unmapped)} did not map to a chromosome.')
     if abundant and compressreads:  # if abundant filename given, sort reads by most abundant,
         # and write to that file as bam file
-        abundantbamfile = pysam.AlignmentFile(abundant, 'wb', template=ISbamfile)
+        abundantbamfile = pysam.AlignmentFile(abundant, 'w', template=ISbamfile)
         abundantlist.sort(key=lambda tup: tup[0], reverse=True)
         mostover = round((100 * abundantlist[0][0] / entries), 3)
-        print(colorama.Style.RESET_ALL + f'Most abundant clone found ' + colorama.Fore.GREEN + f'{abundantlist[0][0]}' +
+        top_clone = abundantlist[0][0]
+        print(colorama.Style.RESET_ALL + f'Most abundant clone found ' + colorama.Fore.GREEN + f'{top_clone}' +
               colorama.Style.RESET_ALL + f' times, ' + colorama.Fore.GREEN + f'{mostover}% '
               + colorama.Style.RESET_ALL + f'of total reads.')
-        message.append(f'Most abundant clone found {abundantlist[0][0]} times, {mostover}% of total reads.')
+        message.append(f'Most abundant clone found {top_clone} times, {mostover}% of total reads.')
         topten = 0
         for i in abundantlist[0:10]:
             topten += i[0]
@@ -205,7 +268,7 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
                                   f'sequences, please specify compressreads too.' + colorama.Style.RESET_ALL)
 
     ISbamfile.close()
-    return readslist, unmapped, "\n".join(message)  # ISbamfile
+    return readslist, unmapped, "\n".join(message), top_clone, topten  # ISbamfile
 
 
 # if write_csv:
@@ -217,7 +280,7 @@ def write_csv(readslist, mapped_csv_file):
         csv_writer = csv.writer(csv_file, delimiter=',')  # comma delimited csv file
         # write csv headder to match expected format
         csv_writer.writerow(
-            ['Chrom', 'Sense', 'Loc', 'Total # IS Sequences Found', 'Total # IS Found', 'Plasmid m995', 'Sample1',
+            ['Chrom', 'Sense', 'Loc', 'Total # IS Sequences Found', 'Total # IS Found', 'Plasmid', 'Sample1',
              'Sample2', 'Sample3', 'Sample4'])
         csv_writer.writerow([])
         csv_writer.writerow([])
@@ -228,7 +291,7 @@ def write_csv(readslist, mapped_csv_file):
     return "\n".join(message)
 
 
-# Chrom,Sense,Loc,Gene,Total # IS Sequences Found,Total # IS Found,Plasmid m995,Sample1,Sample2,Sample3,Sample4
+# Chrom,Sense,Loc,Gene,Total # IS Sequences Found,Total # IS Found,Plasmid,Sample1,Sample2,Sample3,Sample4
 # if read_csv:
 def read_csv(mapped_csv_file, random=False):
     message = []

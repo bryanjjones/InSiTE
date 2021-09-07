@@ -85,9 +85,9 @@ def startsite(feature):
 
 
 # returns list of distances and BedTool object containing list of distances between each feature in a given queryfile
-# (bam) and the closest feature in the given refrence file. given featurename used for labeling output.
-# If position=start, distance to startting nt of refrence features will be used to calculate distance.
-def closest(queryfilename, refrencefilename, featurename='TSS', position="start", distances=[1000], quiet=False):
+# (bam) and the closest feature in the given refereence file. given featurename used for labeling output.
+# If position=start, distance to startting nt of reference features will be used to calculate distance.
+def closest(queryfilename, reference_filename, featurename='TSS', position="start", distances=[1000], quiet=False):
     message = []
     distancelist = []
     closedistances = []
@@ -95,11 +95,11 @@ def closest(queryfilename, refrencefilename, featurename='TSS', position="start"
     for i in range(len(distances)):
         closedistances.append([])
     query = pybedtools.BedTool(queryfilename).bam_to_bed().sort()
-    refrence = pybedtools.BedTool(refrencefilename).sort()
-    # if position is start, make a duplicate refrence site with only startsite nt
+    reference = pybedtools.BedTool(reference_filename).sort()
+    # if position is start, make a duplicate reference site with only startsite nt
     if position == 'start':
-        refrence = refrence.each(startsite).sort().saveas()
-    b = query.closest(refrence, d=True, t="first")
+        reference = reference.each(startsite).sort().saveas()
+    b = query.closest(reference, d=True, t="first")
     for i in b:  # make list of distances
         distancelist.append(i.count)
         for j in range(len(distances)):
@@ -142,11 +142,11 @@ def featuremap(gff, bam, featurenames=['intron', 'exon'], single=False, save=Fal
     results = []
     message = []
     if single:
-        # single feature type in refrence gff/gtf/bed file
+        # single feature type in reference gff/gtf/bed file
         results.append(count_reads_in_features(gff, bam, features=None))
         featurenames = [featurenames]
     else:
-        # multipse feature types in refrence gff/gtf
+        # multipse feature types in reference gff/gtf
         sets = featuresets(gff, featurenames, save=save)
         for feature in sets:
             results.append(count_reads_in_features(None, bam, features=feature))

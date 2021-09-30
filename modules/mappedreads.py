@@ -322,3 +322,5 @@ def read_csv(mapped_csv_file, random=False):
         print(f'Processed ' + colorama.Fore.GREEN + f'{line_count}' + colorama.Style.RESET_ALL + ' lines.')
         message.append(f'Processed {line_count} lines.')
     return reads, message
+
+

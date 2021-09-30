@@ -39,7 +39,7 @@ def merge_pairs(in1, in2, out, bbmerge_location='./bins/bbmap/bbmerge-auto.sh'):
     bbmerge_command += f' in1={in1} in2={in2} out={merge_out} outu1={unmerge_out1} outu2={unmerge_out2}'
     print(f'{bbmerge_command}')
     bbmerge = runbin.Command(bbmerge_command)
-    run = bbmerge.run(timeout=2000)
+    run = bbmerge.run(timeout=20000)
     print(run[1].decode())
     print(run[2].decode())
     filenames = [merge_out, unmerge_out1, unmerge_out2]

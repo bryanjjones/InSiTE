@@ -55,12 +55,12 @@ def map_locus(featurefile, bam):
 
         ID = nearest.fields[9]
         # correction factor of +/- 3 should be removed, figure out where the error is coming from.
-        if nearest.fields[4] == "+":
+        if nearest.fields[5] == "+":
             loc = int(int(nearest.fields[1]) + 3)
-        elif nearest.fields[4] == "-":
+        elif nearest.fields[5] == "-":
             loc = int(int(nearest.fields[1]) + 3)
         else:
-            print(nearest.fields[4])
+            print(nearest.fields[5])
             sys.exit()
         # loc = int(nearest.fields[1])
         feature_end = int(nearest.fields[8])

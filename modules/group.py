@@ -122,7 +122,7 @@ class Locus(object):
             self.loc = int(int(row[2]) + 3)
 
         try:
-            [self.gene, self.ingene, self.dist_to_gene] = locus_names[f"{str(self.chrom)}{str(self.loc)}"]
+            [self.gene, self.ingene, self.dist_to_gene] = locus_names[f"chr{str(self.chrom)}:{str(self.loc)}"]
         except:
             print(f"{str(self.chrom)}{str(self.loc)}")
             exit()

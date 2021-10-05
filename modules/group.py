@@ -106,6 +106,9 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
         for i in range(len(groupped_loci)):
             if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
                 matched = True
+                print(f'grouping {locus.chrom}{locus.sense}:{locus.loc} and {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc}')
+                print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:])[0])
+                print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score)
                 if groupped_loci[i][
                     0].totalreads < locus.totalreads:  # add locus to the front of the loci group if it has the most reads
                     groupped_loci[i].insert(0, locus)
@@ -113,10 +116,13 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                     groupped_loci[i].append(locus)
                 break
         if not matched:
+            print(
+                f'not grouping {locus.chrom}{locus.sense}:{locus.loc} and {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc}')
             groupped_loci.append([locus])
     clustered_loci = []
     groupnumber=0
     for group in groupped_loci:
+        groupnumber += 1
         print(f'group number {groupnumber}:')
         for i in group:
             print(f'{i.chrom}{i.sense}:{i.loc} maps in/near {i.gene}')

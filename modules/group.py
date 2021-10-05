@@ -110,8 +110,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
         for i in range(len(groupped_loci)):
             if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
                 matched = True
-                if locus.complement_loci:
-                    if not groupped_loci[i][0].complement_loci or groupped_loci[i][0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
+                if locus.complement_loci and (not groupped_loci[i][0].complement_loci or groupped_loci[i][0].totalreadsboth < locus.totalreadsboth):  # add locus to the front of the loci group if it has the most reads
                             groupped_loci[i].insert(0, locus)
                 elif not groupped_loci[i][0].complement_loci and groupped_loci[i][0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
                             groupped_loci[i].insert(0, locus)

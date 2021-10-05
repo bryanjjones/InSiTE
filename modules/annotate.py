@@ -61,6 +61,7 @@ def map_locus(featurefile, bam):
             loc = int(int(nearest.fields[1]) + 3)
         else:
             print(nearest.fields[5])
+            print('is not expected + or - for orientation')
             sys.exit()
         # loc = int(nearest.fields[1])
         feature_end = int(nearest.fields[8])

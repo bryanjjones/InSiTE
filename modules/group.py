@@ -25,6 +25,43 @@ chromosomes = {'1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '
                '13': 13, '14': 14, '15': 15, '16': 16, '17': 17, '18': 18, '19': 19, '20': 20, '21': 21, '22': 22,
                '23': 23, '24': 24, "X": 25, "Y": 26, "MT": 27}
 
+class Locus(object):
+    def __init__(self, row, locus_names):
+        self.chrom = str(row[0])
+        self.sense = row[1]
+        if row[1] == "+":
+            self.sensenum = 1
+            self.loc = int(int(row[2]) + 3)
+        elif row[1] == "-":
+            self.sensenum = 2
+            self.loc = int(int(row[2]) + 3)
+
+        try:
+            [self.gene, self.ingene, self.dist_to_gene] = locus_names[f"chr{str(self.chrom)}:{str(self.loc)}"]
+        except:
+            print(locus_names)
+            print(f"chr{str(self.chrom)}:{str(self.loc)}")
+            exit()
+        self.totalreads = row[4]
+        self.similar_loci = []
+        self.complement_loci = None
+        self.similar_complement_loci = []
+        self.sequence = '-'
+        self.name = "chr" + str(self.chrom) + self.sense + str(self.loc)
+
+
+class LocusCluster(object):
+    def __init__(self, primary_locus, loci_list):
+        self.primary = primary_locus
+        self.totalreads = 0
+        self.complement_loci_list = []
+        for locus in loci_list:
+            self.totalreads += int(locus.totalreads)
+            if locus.complement_loci:
+                self.complement_loci_list.append(locus.complement_loci)
+        self.loci_list = loci_list
+        self.complement_primary = primary_locus.complement_loci
+
 
 def group(fastafile, csv_file, percent, outfile, loci_names):
     loci = []
@@ -104,54 +141,20 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
             comp_list = []
             for alt in cluster.complement_loci_list:
                 comp_list.append(f"chrom{alt.chrom}{alt.sense}:{alt.loc}")
-            print(cluster.complement_primary)
-            print(cluster.complement_primary.chrom)
-            exit()
-            csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
+            if cluster.complement_primary:
+                # print(cluster.complement_primary)
+                # print(cluster.complement_primary.chrom)
+                # exit()
+                csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
                        f"chrom{cluster.complement_primary.chrom}{cluster.complement_primary.sens}"
                        f":{cluster.complement_primary.loc}", comp_list, cluster.primary.gene, cluster.primary.ingene,
                        cluster.primary.dist_to_gene]
+            else:
+                csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
+                           f"None", comp_list, cluster.primary.gene,
+                           cluster.primary.ingene,
+                           cluster.primary.dist_to_gene]
             csv_writer.writerow(csvline)
-
-class Locus(object):
-    def __init__(self, row, locus_names):
-        self.chrom = str(row[0])
-        self.sense = row[1]
-        if row[1] == "+":
-            self.sensenum = 1
-            self.loc = int(int(row[2]) + 3)
-        elif row[1] == "-":
-            self.sensenum = 2
-            self.loc = int(int(row[2]) + 3)
-
-        try:
-            [self.gene, self.ingene, self.dist_to_gene] = locus_names[f"chr{str(self.chrom)}:{str(self.loc)}"]
-        except:
-            print(locus_names)
-            print(f"chr{str(self.chrom)}:{str(self.loc)}")
-            exit()
-        self.totalreads = row[4]
-        self.similar_loci = []
-        self.complement_loci = None
-        self.similar_complement_loci = []
-        self.sequence = '-'
-        self.name = "chr" + str(self.chrom) + self.sense + str(self.loc)
-
-
-class LocusCluster(object):
-    def __init__(self, primary_locus, loci_list):
-        self.primary = primary_locus
-        self.totalreads = 0
-        self.complement_loci_list = []
-        for locus in loci_list:
-            self.totalreads += int(locus.totalreads)
-            if locus.complement_loci:
-                self.complement_loci_list.append(locus.complement_loci)
-        self.loci_list = loci_list
-        self.complement_primary = primary_locus.complement_loci
-
-
-#def gene_lookup(chrom, location):
 
 
 if __name__ == "__main__":

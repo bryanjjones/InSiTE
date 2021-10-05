@@ -103,21 +103,21 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
     groupped_loci = []
     matched = False
     for locus in loci:
+        print(f'matching {locus.chrom}{locus.sense}:{locus.loc}...')
         for i in range(len(groupped_loci)):
             if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
                 matched = True
-                print(f'grouping {locus.chrom}{locus.sense}:{locus.loc} and {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc}')
-                print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:])[0])
-                print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score)
+                print(f'matched to {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc} with score {aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score}')
+                #print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:])[0])
+                #print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score)
                 if groupped_loci[i][
                     0].totalreads < locus.totalreads:  # add locus to the front of the loci group if it has the most reads
                     groupped_loci[i].insert(0, locus)
                 else:
                     groupped_loci[i].append(locus)
-                    print(
-                        f'not grouping {locus.chrom}{locus.sense}:{locus.loc} and {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc}')
                 break
         if not matched:
+            print(f'no match, adding new group')
             groupped_loci.append([locus])
     clustered_loci = []
     groupnumber=0

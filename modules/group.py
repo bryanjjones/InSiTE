@@ -125,9 +125,9 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                             out += f" without complement."
                         out += f' total reads:{groupped_loci[i][0].totalreadsboth}.'
                     print(out)
-                if locus.complement_loci and (not groupped_loci[i][0].complement_loci or groupped_loci[i][0].totalreadsboth < locus.totalreadsboth):  # add locus to the front of the loci group if it has the most reads
+                if locus.complement_loci and ((not groupped_loci[i][0].complement_loci) or groupped_loci[i][0].totalreadsboth < locus.totalreadsboth):  # add locus to the front of the loci group if it has the most reads
                             groupped_loci[i].insert(0, locus)
-                elif not groupped_loci[i][0].complement_loci and groupped_loci[i][0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
+                elif (not groupped_loci[i][0].complement_loci) and (groupped_loci[i][0].totalreadsboth < locus.totalreadsboth):  # add locus to the front of the loci group if it has the most reads
                             groupped_loci[i].insert(0, locus)
                 else:
                     groupped_loci[i].append(locus)

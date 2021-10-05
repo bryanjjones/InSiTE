@@ -26,7 +26,7 @@ chromosomes = {'1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '
                '23': 23, '24': 24, "X": 25, "Y": 26, "MT": 27}
 
 
-def group(fastafile, csv_file, percent, outfile):
+def group(fastafile, csv_file, percent, outfile, loci_names):
     loci = []
     seqs = []
     for record in Bio.SeqIO.parse(fastafile, "fasta"):
@@ -41,7 +41,7 @@ def group(fastafile, csv_file, percent, outfile):
                 if row[0] == "Chrom":  # headder row
                     pass
                 else:
-                    loci.append(Locus(row))
+                    loci.append(Locus(row, loci_names))
                     for seq in seqs:
                         if seq.id == loci[-1].name:
                             loci[-1].sequence = seq.seq
@@ -98,12 +98,20 @@ def group(fastafile, csv_file, percent, outfile):
         csv_writer.writerow(
             ['Chrom', 'Sense', 'Loc', 'Total # IS Found', "Alternate loci", "complement read", "alternate complement loci"])
         for cluster in clustered_loci:
-            csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads, i.totalseqs, i.total, i.plasmid, i.sample1, i.sample2,
-                       i.sample3, i.sample4]
+            loci_list = []
+            for alt in cluster.loci_list:
+                loci_list.append(f"chrom{alt.chrom}{alt.sens}:{alt.loc}")
+            comp_list = []
+            for alt in cluster.complement_loci_list:
+                comp_list.append(f"chrom{alt.chrom}{alt.sens}:{alt.loc}")
+            comp_list
+            csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
+                       f"chrom{cluster.complement_primary.chrom}{cluster.complement_primary.sens}"
+                       f":{cluster.complement_primary.loc}", comp_list, cluster.primary.gene, cluster.primary.ingene, cluster.primary.dist_to_gene]
             csv_writer.writerow(csvline)
 
 class Locus(object):
-    def __init__(self, row):
+    def __init__(self, row, locus_names):
         self.chrom = str(row[0])
         self.sense = row[1]
         if row[1] == "+":
@@ -112,7 +120,8 @@ class Locus(object):
         elif row[1] == "-":
             self.sensenum = 2
             self.loc = int(int(row[2]) + 3)
-        self.gene = ""
+
+        [self.gene, self.ingene, self.dist_to_gene] = locus_names[self.chrom+self.loc]
         self.totalreads = row[4]
         self.similar_loci = []
         self.complement_loci = []
@@ -145,5 +154,4 @@ if __name__ == "__main__":
     root_name = os.path.splitext(os.path.realpath(in_csv))[0]
     out_csv = "{root_name}_grouped.csv"
     loci_names = annotate.map_locus(transcripts, in_bam)
-    print(loci_names)
-    group(in_fasta, in_csv, .01, out_csv)
+    group(in_fasta, in_csv, .01, out_csv, loci_names)

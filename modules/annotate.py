@@ -50,7 +50,7 @@ def map_locus(featurefile, bam):
     """
     bambed = pybedtools.BedTool.bam_to_bed(pybedtools.BedTool(bam)).sort()
     features = pybedtools.BedTool(featurefile).sort()
-    locus_names = []
+    locus_names = {}
     for nearest in pybedtools.BedTool(bambed).closest(features):
 
         ID = nearest.fields[9]
@@ -65,7 +65,7 @@ def map_locus(featurefile, bam):
         else:
             infeature = False
             distance = min(abs(loc - feature_end), abs(loc - feature_start))
-        locus_names.append([ID, infeature, distance, chrom, loc])
+        locus_names[chrom+loc] = [ID, infeature, distance]
     return locus_names
 
 

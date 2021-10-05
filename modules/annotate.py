@@ -57,13 +57,15 @@ def map_locus(featurefile, bam):
         loc = int(nearest.fields[1])
         feature_end = int(nearest.fields[8])
         feature_start = int(nearest.fields[7])
+        chrom = (nearest.fields[0])
+
         if feature_start <= loc <= feature_end:
             infeature = True
             distance = 0
         else:
             infeature = False
             distance = abs(loc - feature_end)
-        locus_names.append([ID, infeature, distance])
+        locus_names.append([ID, infeature, distance, chrom,loc])
     return locus_names
 
 

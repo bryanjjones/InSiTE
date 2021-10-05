@@ -124,7 +124,8 @@ class Locus(object):
         try:
             [self.gene, self.ingene, self.dist_to_gene] = locus_names[f"chr{str(self.chrom)}:{str(self.loc)}"]
         except:
-            print(f"{str(self.chrom)}{str(self.loc)}")
+            print(locus_names)
+            print(f"chr{str(self.chrom)}:{str(self.loc)}")
             exit()
         self.totalreads = row[4]
         self.similar_loci = []

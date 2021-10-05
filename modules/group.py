@@ -100,14 +100,14 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
         for cluster in clustered_loci:
             loci_list = []
             for alt in cluster.loci_list:
-                loci_list.append(f"chrom{alt.chrom}{alt.sens}:{alt.loc}")
+                loci_list.append(f"chrom{alt.chrom}{alt.sense}:{alt.loc}")
             comp_list = []
             for alt in cluster.complement_loci_list:
-                comp_list.append(f"chrom{alt.chrom}{alt.sens}:{alt.loc}")
-            comp_list
+                comp_list.append(f"chrom{alt.chrom}{alt.sense}:{alt.loc}")
             csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
                        f"chrom{cluster.complement_primary.chrom}{cluster.complement_primary.sens}"
-                       f":{cluster.complement_primary.loc}", comp_list, cluster.primary.gene, cluster.primary.ingene, cluster.primary.dist_to_gene]
+                       f":{cluster.complement_primary.loc}", comp_list, cluster.primary.gene, cluster.primary.ingene,
+                       cluster.primary.dist_to_gene]
             csv_writer.writerow(csvline)
 
 class Locus(object):

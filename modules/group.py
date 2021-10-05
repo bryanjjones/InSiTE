@@ -104,7 +104,8 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
             comp_list = []
             for alt in cluster.complement_loci_list:
                 comp_list.append(f"chrom{alt.chrom}{alt.sense}:{alt.loc}")
-            print(cluster.primary[:])
+            print(cluster.complement_primary)
+            print(cluster.complement_primary.chrom)
             exit()
             csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
                        f"chrom{cluster.complement_primary.chrom}{cluster.complement_primary.sens}"
@@ -131,7 +132,7 @@ class Locus(object):
             exit()
         self.totalreads = row[4]
         self.similar_loci = []
-        self.complement_loci = []
+        self.complement_loci = None
         self.similar_complement_loci = []
         self.sequence = '-'
         self.name = "chr" + str(self.chrom) + self.sense + str(self.loc)

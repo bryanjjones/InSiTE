@@ -91,6 +91,7 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                 pass
     # connect complement loci
     loci_with_complement = []
+    print(len(loci))
     for locus in loci:
         loci_with_complement.append(locus)
         if loci_with_complement[-1].sense == "+":
@@ -103,6 +104,7 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
             if other_locus.name == complement_name:
                 loci_with_complement[-1].complement_loci = other_locus
     loci = loci_with_complement
+    print(len(loci))
     # group similar loci
     groupped_loci = []
     for locus in loci:
@@ -113,12 +115,7 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
             try:
                 if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
                     matched = True
-                    if int(locus.loc) == 24770514:
-                        print(f'matched to {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc} with score {aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score}')
-                    #print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:])[0])
-                    #print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score)
-                    if groupped_loci[i][
-                        0].totalreads < locus.totalreads:  # add locus to the front of the loci group if it has the most reads
+                    if groupped_loci[i][0].totalreads < locus.totalreads:  # add locus to the front of the loci group if it has the most reads
                         groupped_loci[i].insert(0, locus)
                     else:
                         groupped_loci[i].append(locus)
@@ -130,16 +127,12 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                 print(groupped_loci[i][0].sequence[:])
                 exit()
         if not matched:
-            if int(locus.loc) == 24770514:
-                print(f'no match, adding new group')
             groupped_loci.append([locus])
     clustered_loci = []
     groupnumber=0
     for group in groupped_loci:
         groupnumber += 1
-        # print(f'group number {groupnumber}:')
-        # for i in group:
-        #     print(f'{i.chrom}{i.sense}:{i.loc} maps in/near {i.gene}')
+
         clustered_loci.append(LocusCluster(group[0], group))
     # for i in range
     #     #if locus.
@@ -166,9 +159,6 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
             for alt in cluster.complement_loci_list[1:]:
                 comp_list.append(f"chr{alt.chrom}{alt.sense}:{alt.loc}")
             if cluster.complement_primary:
-                # print(cluster.complement_primary)
-                # print(cluster.complement_primary.chrom)
-                # exit()
                 csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
                        f"chr{cluster.complement_primary.chrom}{cluster.complement_primary.sense}"
                        f":{cluster.complement_primary.loc}", loci_list, comp_list, cluster.primary.gene, cluster.primary.ingene,

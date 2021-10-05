@@ -163,6 +163,6 @@ if __name__ == "__main__":
     in_bam = "../examples/PGK-High-C1_R1_001IS.bam"
     transcripts = "../reference_datasets/annotations/refseq.transcripts.bed"
     root_name = os.path.splitext(os.path.realpath(in_csv))[0]
-    out_csv = "{root_name}_grouped.csv"
+    out_csv = f"{root_name}_grouped.csv"
     loci_names = annotate.map_locus(transcripts, in_bam)
     group(in_fasta, in_csv, .01, out_csv, loci_names)

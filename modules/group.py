@@ -43,6 +43,7 @@ class Locus(object):
             print(f"chr{str(self.chrom)}:{str(self.loc)}")
             exit()
         self.totalreads = row[4]
+        self.totalreadsboth = row[4]
         self.similar_loci = []
         self.complement_loci = None
         self.similar_complement_loci = []
@@ -103,6 +104,7 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
         for other_locus in loci:
             if other_locus.name == complement_name:
                 loci_with_complement[-1].complement_loci = other_locus
+                loci_with_complement[-1].totalreadsboth = loci_with_complement[-1].totalreads + other_locus.totalreads
     loci = loci_with_complement
     print(len(loci))
     # group similar loci
@@ -117,7 +119,7 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                     if int(locus.loc) == 91387407:
                         print(f"matched {locus.chrom} {locus.sense} {locus.loc} to {groupped_loci[i][0].chrom} {groupped_loci[i][0].sense} {groupped_loci[i][0].loc}")
                     matched = True
-                    if groupped_loci[i][0].totalreads < locus.totalreads:  # add locus to the front of the loci group if it has the most reads
+                    if groupped_loci[i][0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
                         groupped_loci[i].insert(0, locus)
                     else:
                         groupped_loci[i].append(locus)
@@ -148,7 +150,7 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
     # Bio.SeqIO.write(seqs, outputfile, "fasta")
     # groupped_loci.sort(key=lambda x: x.primary.chrom, reverse=True)
     # sorted(groupped_loci, key=trial_dict.get)
-    sorted(clustered_loci, key=lambda x: (chromosomes[x.primary.chrom] , x.primary.loc))
+    sorted(clustered_loci, key=lambda x: (chromosomes[x.primary.chrom], x.primary.loc))
     print(len(clustered_loci))
     for cluster in clustered_loci:
         pass

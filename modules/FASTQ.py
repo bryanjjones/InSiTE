@@ -4,7 +4,7 @@ import Bio.SeqIO
 import Bio.Entrez
 import Bio.SeqRecord
 import Bio.Seq
-from modules import runbin
+import runbin
 import random
 import colorama
 

@@ -111,7 +111,7 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
         matched = False
         for i in range(len(groupped_loci)):
             try:
-                if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold and :
+                if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
                     matched = True
                     if int(locus.loc) == 24770514:
                         print(f'matched to {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc} with score {aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score}')

@@ -132,6 +132,7 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
             if int(locus.loc) == 91387407:
                 print(f"not matched")
             groupped_loci.append([locus])
+        print(len(groupped_loci))
     print(len(groupped_loci))
     clustered_loci = []
     groupnumber=0

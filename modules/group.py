@@ -106,13 +106,15 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
     # group similar loci
     groupped_loci = []
     for locus in loci:
-        print(f'matching {locus.chrom}{locus.sense}:{locus.loc}...')
+        if int(locus.loc) == 24770514:
+            print(f'matching {locus.chrom}{locus.sense}:{locus.loc}...')
         matched = False
         for i in range(len(groupped_loci)):
             try:
-                if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
+                if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold and :
                     matched = True
-                    print(f'matched to {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc} with score {aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score}')
+                    if int(locus.loc) == 24770514:
+                        print(f'matched to {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc} with score {aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score}')
                     #print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:])[0])
                     #print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score)
                     if groupped_loci[i][
@@ -128,7 +130,8 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                 print(groupped_loci[i][0].sequence[:])
                 exit()
         if not matched:
-            print(f'no match, adding new group')
+            if int(locus.loc) == 24770514:
+                print(f'no match, adding new group')
             groupped_loci.append([locus])
     clustered_loci = []
     groupnumber=0

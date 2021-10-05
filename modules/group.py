@@ -109,9 +109,13 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
     groupped_loci = []
     for locus in loci:
         matched = False
+        if int(locus.loc) == 91387407:
+            print(f"matching {locus.chrom} {locus.sense} {locus.loc}")
         for i in range(len(groupped_loci)):
             try:
                 if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
+                    if int(locus.loc) == 91387407:
+                        print(f"matched {locus.chrom} {locus.sense} {locus.loc} to {groupped_loci[i][0].chrom} {groupped_loci[i][0].sense} {groupped_loci[i][0].loc}")
                     matched = True
                     if groupped_loci[i][0].totalreads < locus.totalreads:  # add locus to the front of the loci group if it has the most reads
                         groupped_loci[i].insert(0, locus)
@@ -125,6 +129,8 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                 print(groupped_loci[i][0].sequence[:])
                 exit()
         if not matched:
+            if int(locus.loc) == 91387407:
+                print(f"not matched")
             groupped_loci.append([locus])
     print(len(groupped_loci))
     clustered_loci = []

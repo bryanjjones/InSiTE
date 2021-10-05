@@ -114,10 +114,10 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                     groupped_loci[i].insert(0, locus)
                 else:
                     groupped_loci[i].append(locus)
+                    print(
+                        f'not grouping {locus.chrom}{locus.sense}:{locus.loc} and {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc}')
                 break
         if not matched:
-            print(
-                f'not grouping {locus.chrom}{locus.sense}:{locus.loc} and {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc}')
             groupped_loci.append([locus])
     clustered_loci = []
     groupnumber=0

@@ -59,6 +59,9 @@ def map_locus(featurefile, bam):
             loc = int(int(nearest.fields[1]) + 3)
         elif nearest.fields[4] == "-":
             loc = int(int(nearest.fields[1]) + 3)
+        else:
+            print(nearest.fields[4])
+            sys.exit()
         # loc = int(nearest.fields[1])
         feature_end = int(nearest.fields[8])
         feature_start = int(nearest.fields[7])

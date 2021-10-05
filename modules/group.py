@@ -107,21 +107,22 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
         for i in range(len(groupped_loci)):
             try:
                 if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
-                matched = True
-                print(f'matched to {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc} with score {aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score}')
-                #print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:])[0])
-                #print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score)
-                if groupped_loci[i][
-                    0].totalreads < locus.totalreads:  # add locus to the front of the loci group if it has the most reads
-                    groupped_loci[i].insert(0, locus)
-                else:
-                    groupped_loci[i].append(locus)
-                break
+                    matched = True
+                    print(f'matched to {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc} with score {aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score}')
+                    #print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:])[0])
+                    #print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score)
+                    if groupped_loci[i][
+                        0].totalreads < locus.totalreads:  # add locus to the front of the loci group if it has the most reads
+                        groupped_loci[i].insert(0, locus)
+                    else:
+                        groupped_loci[i].append(locus)
+                    break
             except:
                 print(locus.name)
                 print(locus.sequence[53:])
                 print(groupped_loci[i][0].name)
                 print(groupped_loci[i][0].sequence[53:])
+                exit()
         if not matched:
             print(f'no match, adding new group')
             groupped_loci.append([locus])

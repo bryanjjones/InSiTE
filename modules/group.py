@@ -157,20 +157,20 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
         csv_writer = csv.writer(csv_file, delimiter=',')  # comma delimited csv file
         # write csv headder to match expected format
         csv_writer.writerow(
-            ['Chrom', 'Sense', 'Loc', 'Total # IS Found', "Alternate loci", "complement read", "alternate complement loci", 'Nearest Gene', "In gene", "Distance to Gene (bp)"])
+            ['Chrom', 'Sense', 'Loc', 'Total # IS Found', "complement read", "Alternate loci", "alternate complement loci", 'Nearest Gene', "In gene", "Distance to Gene (bp)"])
         for cluster in clustered_loci:
             loci_list = []
-            for alt in cluster.loci_list:
-                loci_list.append(f"chrom{alt.chrom}{alt.sense}:{alt.loc}")
+            for alt in cluster.loci_list[1:]:
+                loci_list.append(f"chr{alt.chrom}{alt.sense}:{alt.loc}")
             comp_list = []
-            for alt in cluster.complement_loci_list:
-                comp_list.append(f"chrom{alt.chrom}{alt.sense}:{alt.loc}")
+            for alt in cluster.complement_loci_list[1:]:
+                comp_list.append(f"chr{alt.chrom}{alt.sense}:{alt.loc}")
             if cluster.complement_primary:
                 # print(cluster.complement_primary)
                 # print(cluster.complement_primary.chrom)
                 # exit()
                 csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
-                       f"chrom{cluster.complement_primary.chrom}{cluster.complement_primary.sense}"
+                       f"chr{cluster.complement_primary.chrom}{cluster.complement_primary.sense}"
                        f":{cluster.complement_primary.loc}", loci_list, comp_list, cluster.primary.gene, cluster.primary.ingene,
                        cluster.primary.dist_to_gene]
             else:

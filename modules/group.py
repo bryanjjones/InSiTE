@@ -108,8 +108,6 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
     # group similar loci
     groupped_loci = []
     for locus in loci:
-        if int(locus.loc) == 24770514:
-            print(f'matching {locus.chrom}{locus.sense}:{locus.loc}...')
         matched = False
         for i in range(len(groupped_loci)):
             try:
@@ -128,11 +126,11 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                 exit()
         if not matched:
             groupped_loci.append([locus])
+    print(len(groupped_loci))
     clustered_loci = []
     groupnumber=0
     for group in groupped_loci:
         groupnumber += 1
-
         clustered_loci.append(LocusCluster(group[0], group))
     # for i in range
     #     #if locus.
@@ -144,6 +142,7 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
     # groupped_loci.sort(key=lambda x: x.primary.chrom, reverse=True)
     # sorted(groupped_loci, key=trial_dict.get)
     sorted(clustered_loci, key=lambda x: (chromosomes[x.primary.chrom] , x.primary.loc))
+    print(len(clustered_loci))
     for cluster in clustered_loci:
         pass
     with open(outfile, "w", newline="") as csv_file:

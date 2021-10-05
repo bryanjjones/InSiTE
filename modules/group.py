@@ -123,9 +123,9 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
     groupnumber=0
     for group in groupped_loci:
         groupnumber += 1
-        print(f'group number {groupnumber}:')
-        for i in group:
-            print(f'{i.chrom}{i.sense}:{i.loc} maps in/near {i.gene}')
+        # print(f'group number {groupnumber}:')
+        # for i in group:
+        #     print(f'{i.chrom}{i.sense}:{i.loc} maps in/near {i.gene}')
         clustered_loci.append(LocusCluster(group[0], group))
     # for i in range
     #     #if locus.

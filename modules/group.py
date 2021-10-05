@@ -34,7 +34,7 @@ class Locus(object):
             self.loc = int(int(row[2]) + 3)
         elif row[1] == "-":
             self.sensenum = 2
-            self.loc = int(int(row[2]) + 3)
+            self.loc = int(int(row[2]) - 3)
 
         try:
             [self.gene, self.ingene, self.dist_to_gene] = locus_names[f"chr{str(self.chrom)}:{str(self.loc)}"]
@@ -143,7 +143,7 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
         csv_writer = csv.writer(csv_file, delimiter=',')  # comma delimited csv file
         # write csv headder to match expected format
         csv_writer.writerow(
-            ['Chrom', 'Sense', 'Loc', 'Total # IS Found', "Alternate loci", "complement read", "alternate complement loci"])
+            ['Chrom', 'Sense', 'Loc', 'Total # IS Found', "Alternate loci", "complement read", "alternate complement loci", 'Nearest Gene', "In gene", "Distance to Gene (bp)"])
         for cluster in clustered_loci:
             loci_list = []
             for alt in cluster.loci_list:
@@ -157,11 +157,11 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                 # exit()
                 csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
                        f"chrom{cluster.complement_primary.chrom}{cluster.complement_primary.sens}"
-                       f":{cluster.complement_primary.loc}", comp_list, cluster.primary.gene, cluster.primary.ingene,
+                       f":{cluster.complement_primary.loc}", loci_list, comp_list, cluster.primary.gene, cluster.primary.ingene,
                        cluster.primary.dist_to_gene]
             else:
                 csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
-                           f"None", comp_list, cluster.primary.gene,
+                           f"None", loci_list, comp_list, cluster.primary.gene,
                            cluster.primary.ingene,
                            cluster.primary.dist_to_gene]
             csv_writer.writerow(csvline)

@@ -58,7 +58,7 @@ def map_locus(featurefile, bam):
         if nearest.fields[5] == "+":
             loc = int(int(nearest.fields[1]) + 3)
         elif nearest.fields[5] == "-":
-            loc = int(int(nearest.fields[1]) + 3)
+            loc = int(int(nearest.fields[1]) - 3)
         else:
             print(nearest.fields[5])
             print('is not expected + or - for orientation')

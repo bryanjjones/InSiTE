@@ -54,7 +54,12 @@ def map_locus(featurefile, bam):
     for nearest in pybedtools.BedTool(bambed).closest(features):
 
         ID = nearest.fields[9]
-        loc = int(nearest.fields[1])
+        # correction factor of +/- 3 should be removed, figure out where the error is coming from.
+        if nearest.fields[4] == "+":
+            loc = int(int(nearest.fields[1]) + 3)
+        elif nearest.fields[4] == "-":
+            loc = int(int(nearest.fields[1]) + 3)
+        # loc = int(nearest.fields[1])
         feature_end = int(nearest.fields[8])
         feature_start = int(nearest.fields[7])
         chrom = (nearest.fields[0])

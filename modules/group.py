@@ -102,7 +102,6 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
             if other_locus.name == complement_name:
                 loci_with_complement[-1].complement_loci = other_locus
                 loci_with_complement[-1].totalreadsboth = str(int(loci_with_complement[-1].totalreads) + int(other_locus.totalreads))
-                print(f"{other_locus.name}: {other_locus.totalreads}")
     loci = loci_with_complement
     # group similar loci
     groupped_loci = []
@@ -114,7 +113,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                 if str(locus.chrom) == str(17):
                     out = f'does {locus.name} have complement? '
                     if locus.complement_loci:
-                        out+=f"yes: {locus.complement_loci.name}. total reads:{locus.totalreadsboth}."
+                        out += f"yes: {locus.complement_loci.name}. total reads:{locus.totalreadsboth}."
                     else:
                         out += f"no. Reads:{locus.totalreadsboth}."
                     if groupped_loci[i][0]:
@@ -125,10 +124,18 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                             out += f" without complement."
                         out += f' total reads:{groupped_loci[i][0].totalreadsboth}.'
                     print(out)
-                if locus.complement_loci and ((not groupped_loci[i][0].complement_loci) or groupped_loci[i][0].totalreadsboth < locus.totalreadsboth):  # add locus to the front of the loci group if it has the most reads
-                            groupped_loci[i].insert(0, locus)
-                elif (not groupped_loci[i][0].complement_loci) and (groupped_loci[i][0].totalreadsboth < locus.totalreadsboth):  # add locus to the front of the loci group if it has the most reads
-                            groupped_loci[i].insert(0, locus)
+                if locus.complement_loci:
+                    if not groupped_loci[i][0].complement_loci:
+                        groupped_loci[i].insert(0, locus)
+                    elif groupped_loci[i][0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
+                        groupped_loci[i].insert(0, locus)
+                    else:
+                        groupped_loci[i].append(locus)
+                elif not groupped_loci[i][0].complement_loci:
+                    if groupped_loci[i][0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
+                        groupped_loci[i].insert(0, locus)
+                    else:
+                        groupped_loci[i].append(locus)
                 else:
                     groupped_loci[i].append(locus)
                 break

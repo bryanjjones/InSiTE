@@ -44,10 +44,28 @@ def count_reads_in_features(featurefile, bam, features=None):
     return mapped  # , total
 
 
-def map_locus(featurefile, bam, features=None):
+def map_locus(featurefile, bam):
     """
     function to map individual reads to features
     """
+    bambed = pybedtools.BedTool.bam_to_bed(pybedtools.BedTool(bam)).sort()
+    features = pybedtools.BedTool(featurefile).sort()
+    locus_names = []
+    for nearest in pybedtools.BedTool(bambed).closest(features):
+
+        ID = nearest.fields[9]
+        loc = nearest.fields[1]
+        feature_end = nearest.fields[8]
+        feature_start = nearest.fields[7]
+        if feature_start <= nearest.fields[1] <= feature_end:
+            infeature = True
+            distance = 0
+        else:
+            infeature = False
+            distance = abs(loc - feature_end)
+        locus_names.append([ID, infeature, distance])
+    return locus_names
+
 
     # if features is not None:
     #     if featurefile:

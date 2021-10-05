@@ -13,6 +13,7 @@ import Bio.SeqRecord
 import Bio.Seq
 import runbin
 import random
+import annotate
 
 aligner = Bio.Align.PairwiseAligner()
 aligner.mode = 'global'
@@ -139,6 +140,10 @@ class LocusCluster(object):
 if __name__ == "__main__":
     in_fasta = "../examples/PGK-High-C1_R1_001_retrieved_2bit.fasta"
     in_csv = "../examples/PGK-High-C1_R1_001_IS_mappings.csv"
+    in_bam = "../examples/PGK-High-C1_R1_001IS.bam"
+    transcripts = "../reference_datasets/annotations/refseq.transcripts.bed"
     root_name = os.path.splitext(os.path.realpath(in_csv))[0]
     out_csv = "{root_name}_grouped.csv"
+    loci_names = annotate.map_locus(transcripts, in_bam)
+    print(loci_names)
     group(in_fasta, in_csv, .01, out_csv)

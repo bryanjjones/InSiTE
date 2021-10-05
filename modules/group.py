@@ -31,10 +31,10 @@ class Locus(object):
         self.sense = row[1]
         if row[1] == "+":
             self.sensenum = 1
-            self.loc = int(int(row[2]) + 3)
+            self.loc = int(int(row[2]) + 3)  #TODO fix 3bp offset
         elif row[1] == "-":
             self.sensenum = 2
-            self.loc = int(int(row[2]) - 3)
+            self.loc = int(int(row[2]) - 3)  #TODO fix 3bp offset
 
         try:
             [self.gene, self.ingene, self.dist_to_gene] = locus_names[f"chr{str(self.chrom)}:{str(self.loc)}"]
@@ -68,8 +68,12 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
     seqs = []
     for record in Bio.SeqIO.parse(fastafile, "fasta"):
         seqs.append(record)
-        seqs[-1].id = seqs[-1].name.split(":")[0] + str(int(min(seqs[-1].name.split(":")[1].split(
-            "-"))) + 53)  # [seqs[-1].name.split(":")[0][3:-1], seqs[-1].name.split(":")[0][-1], int(min(seqs[-1].name.split(":")[1].split("-")))+53]
+        if seqs[-1].name.split(":")[0][-1] == "+":
+            seqs[-1].id = seqs[-1].name.split(":")[0] + str(int(min(seqs[-1].name.split(":")[1].split(
+                "-"))) + 53)  # [seqs[-1].name.split(":")[0][3:-1], seqs[-1].name.split(":")[0][-1], int(min(seqs[-1].name.split(":")[1].split("-")))+53]  #TODO fix 3bp offset
+        elif seqs[-1].name.split(":")[0][-1] == "-":
+            seqs[-1].id = seqs[-1].name.split(":")[0] + str(int(min(seqs[-1].name.split(":")[1].split(
+                "-"))) + 47) #TODO fix 3bp offset
     with open(csv_file) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=",")
         line_count = 0
@@ -119,9 +123,9 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                     break
             except:
                 print(locus.name)
-                print(locus.sequence[53:])
+                print(locus.sequence[:])
                 print(groupped_loci[i][0].name)
-                print(groupped_loci[i][0].sequence[53:])
+                print(groupped_loci[i][0].sequence[:])
                 exit()
         if not matched:
             print(f'no match, adding new group')

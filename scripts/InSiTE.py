@@ -3,16 +3,16 @@ import csv
 import random
 import sys
 import time
-import FASTQ
+from modules import FASTQ
 import Bio.SeqIO
 import colorama
 import os
 import pysam
-import runbin
-import mappedreads
-import getseq
+from modules import runbin
+from modules import mappedreads
+from modules import getseq
+from modules import annotate
 import twobitreader
-import annotate
 import argparse
 import logging
 
@@ -21,9 +21,7 @@ import logging
 
 
 # inputs:
-inputtype = None  # sam, csv, fasta, fastq
-vector_file = None  # fasta file containing vector sequences to filter
-inputfile = ''  # input file name
+
 userandomIS = 0  # 0 #useful for generating a random control data set chromosome matched to query set.
 userandomSEQS = 0  # generate random sequence data, usefull for calculating false positive rate when mapping reads w/
 # bowtie
@@ -88,9 +86,7 @@ readslist = None
 append_summary = False
 vector_tallies = []
 
-
 #def process_fastq():
-
 
 if __name__ == "__main__":
 
@@ -223,8 +219,6 @@ if __name__ == "__main__":
     writelogo = not args.supress_logo
     if args.pairs:
         pairedfile = args.pairs
-    else:
-        pairedfile = None
     verbose = args.verbose
     append_summary = args.append_summary
     # if args.RC:

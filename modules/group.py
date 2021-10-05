@@ -167,7 +167,7 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                 # print(cluster.complement_primary.chrom)
                 # exit()
                 csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
-                       f"chrom{cluster.complement_primary.chrom}{cluster.complement_primary.sens}"
+                       f"chrom{cluster.complement_primary.chrom}{cluster.complement_primary.sense}"
                        f":{cluster.complement_primary.loc}", loci_list, comp_list, cluster.primary.gene, cluster.primary.ingene,
                        cluster.primary.dist_to_gene]
             else:

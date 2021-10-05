@@ -54,9 +54,9 @@ def map_locus(featurefile, bam):
     for nearest in pybedtools.BedTool(bambed).closest(features):
 
         ID = nearest.fields[9]
-        loc = nearest.fields[1]
-        feature_end = nearest.fields[8]
-        feature_start = nearest.fields[7]
+        loc = int(nearest.fields[1])
+        feature_end = int(nearest.fields[8])
+        feature_start = int(nearest.fields[7])
         if feature_start <= nearest.fields[1] <= feature_end:
             infeature = True
             distance = 0

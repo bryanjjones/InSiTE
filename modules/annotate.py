@@ -64,8 +64,8 @@ def map_locus(featurefile, bam):
             distance = 0
         else:
             infeature = False
-            distance = abs(loc - feature_end)
-        locus_names.append([ID, infeature, distance, chrom,loc])
+            distance = min(abs(loc - feature_end), abs(loc - feature_start))
+        locus_names.append([ID, infeature, distance, chrom, loc])
     return locus_names
 
 

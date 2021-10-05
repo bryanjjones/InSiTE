@@ -105,7 +105,8 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
         print(f'matching {locus.chrom}{locus.sense}:{locus.loc}...')
         matched = False
         for i in range(len(groupped_loci)):
-            if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
+            try:
+                if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
                 matched = True
                 print(f'matched to {groupped_loci[i][0].chrom}{groupped_loci[i][0].sense}:{groupped_loci[i][0].loc} with score {aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score}')
                 #print(aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:])[0])
@@ -116,6 +117,11 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                 else:
                     groupped_loci[i].append(locus)
                 break
+            except:
+                print(locus.name)
+                print(locus.sequence[53:])
+                print(groupped_loci[i][0].name)
+                print(groupped_loci[i][0].sequence[53:])
         if not matched:
             print(f'no match, adding new group')
             groupped_loci.append([locus])

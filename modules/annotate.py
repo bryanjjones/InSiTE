@@ -44,6 +44,25 @@ def count_reads_in_features(featurefile, bam, features=None):
     return mapped  # , total
 
 
+def map_locus(featurefile, bam, features=None):
+    """
+    function to map individual reads to features
+    """
+
+    # if features is not None:
+    #     if featurefile:
+    #         print(colorama.Fore.RED + f'Given both file name and feature set: Using feature set, ignoring file: ' +
+    #               colorama.Fore.YELLOW + f'{featurefile}' + colorama.Style.RESET_ALL)
+    # else:
+    #     features = pybedtools.BedTool(
+    #         featurefile).sort().merge()  # sort and merge all features in feature file
+    #     # to categorize whole genome as feature or non-feature
+    # bambed = pybedtools.BedTool(bam)
+    # mapped = (bambed.intersect(features, s=False, bed=True, stream=True, )).count()
+    # # total = pybedtools.BedTool(bam).count()
+    # return mapped  # , total
+
+
 def intersection(a, b):
     # takes two BedTool objects and returns three BedTool objects of overlap, and non-overlapping regions of each.
     a_only = a.subtract(b).merge()

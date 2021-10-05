@@ -101,9 +101,9 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
     loci = loci_with_complement
     # group similar loci
     groupped_loci = []
-    matched = False
     for locus in loci:
         print(f'matching {locus.chrom}{locus.sense}:{locus.loc}...')
+        matched = False
         for i in range(len(groupped_loci)):
             if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
                 matched = True

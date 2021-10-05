@@ -5,7 +5,6 @@ import Bio.Entrez
 import Bio.Seq
 import Bio.SeqIO
 import Bio.SeqRecord
-from Bio.Alphabet import IUPAC
 
 
 # fetch indicated sequence from local 2bit genome. chrom given as number (or X/Y/NT), sense given as '+'/'-'.
@@ -14,14 +13,14 @@ def fetch_seq_from_twobit(genome, chrom, sense, loc, lwindow, rwindow, samwindow
         seq_start = int(loc + samwindow + lwindow)  # range of sequence to return
         seq_stop = int(loc + samwindow - rwindow)
         sequence = genome[f'chr{chrom}'][seq_stop:seq_start]
-        record = Bio.SeqRecord.SeqRecord(Bio.Seq.reverse_complement(Bio.Seq.Seq(sequence, IUPAC.unambiguous_dna)),
+        record = Bio.SeqRecord.SeqRecord(Bio.Seq.reverse_complement(Bio.Seq.Seq(sequence)),
                                          id=f'chr{chrom}{sense}:{seq_start}-{seq_stop}', description='')
         return record
     elif sense == '+':
         seq_start = int(loc - lwindow)  # range of sequence to return
         seq_stop = int(loc + rwindow)
         sequence = genome[f'chr{chrom}'][seq_start:seq_stop]
-        record = Bio.SeqRecord.SeqRecord(Bio.Seq.Seq(sequence, IUPAC.unambiguous_dna),
+        record = Bio.SeqRecord.SeqRecord(Bio.Seq.Seq(sequence),
                                          id=f'chr{chrom}{sense}:{seq_start}-{seq_stop}', description='')
         return record
 

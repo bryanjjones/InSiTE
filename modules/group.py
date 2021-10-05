@@ -102,6 +102,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
             if other_locus.name == complement_name:
                 loci_with_complement[-1].complement_loci = other_locus
                 loci_with_complement[-1].totalreadsboth = loci_with_complement[-1].totalreads + other_locus.totalreads
+                print(f"{other_locus.name}: {other_locus.totalreads}")
     loci = loci_with_complement
     # group similar loci
     groupped_loci = []

@@ -36,12 +36,7 @@ class Locus(object):
             self.sensenum = 2
             self.loc = int(int(row[2]) - 3)  #TODO fix 3bp offset
 
-        try:
-            [self.gene, self.ingene, self.dist_to_gene] = locus_names[f"chr{str(self.chrom)}:{str(self.loc)}"]
-        except:
-            print(locus_names)
-            print(f"chr{str(self.chrom)}:{str(self.loc)}")
-            exit()
+        [self.gene, self.ingene, self.dist_to_gene] = locus_names[f"chr{str(self.chrom)}:{str(self.loc)}"]
         self.totalreads = row[4]
         self.totalreadsboth = row[4]
         self.similar_loci = []
@@ -64,7 +59,10 @@ class LocusCluster(object):
         self.complement_primary = primary_locus.complement_loci
 
 
-def group(fastafile, csv_file, percent, outfile, loci_names):
+def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile=None):
+    if not outfile:
+        outfile = f"{os.path.splitext(os.path.realpath(csv_file))[0]}_grouped.csv"
+
     loci = []
     seqs = []
     for record in Bio.SeqIO.parse(fastafile, "fasta"):
@@ -92,7 +90,6 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                 pass
     # connect complement loci
     loci_with_complement = []
-    print(len(loci))
     for locus in loci:
         loci_with_complement.append(locus)
         if loci_with_complement[-1].sense == "+":
@@ -106,36 +103,20 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
                 loci_with_complement[-1].complement_loci = other_locus
                 loci_with_complement[-1].totalreadsboth = loci_with_complement[-1].totalreads + other_locus.totalreads
     loci = loci_with_complement
-    print(len(loci))
     # group similar loci
     groupped_loci = []
     for locus in loci:
         matched = False
-        if int(locus.loc) == 91387407:
-            print(f"matching {locus.chrom} {locus.sense} {locus.loc}")
         for i in range(len(groupped_loci)):
-            try:
-                if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
-                    if int(locus.loc) == 91387407:
-                        print(f"matched {locus.chrom} {locus.sense} {locus.loc} to {groupped_loci[i][0].chrom} {groupped_loci[i][0].sense} {groupped_loci[i][0].loc}")
-                    matched = True
-                    if groupped_loci[i][0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
-                        groupped_loci[i].insert(0, locus)
-                    else:
-                        groupped_loci[i].append(locus)
-                    break
-            except:
-                print(locus.name)
-                print(locus.sequence[:])
-                print(groupped_loci[i][0].name)
-                print(groupped_loci[i][0].sequence[:])
-                exit()
+            if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
+                matched = True
+                if groupped_loci[i][0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
+                    groupped_loci[i].insert(0, locus)
+                else:
+                    groupped_loci[i].append(locus)
+                break
         if not matched:
-            if int(locus.loc) == 91387407:
-                print(f"not matched")
-            print(len(groupped_loci))
             groupped_loci.append([locus])
-    print(len(groupped_loci))
     clustered_loci = []
     for group in groupped_loci:
         clustered_loci.append(LocusCluster(group[0], group))
@@ -149,14 +130,23 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
     # groupped_loci.sort(key=lambda x: x.primary.chrom, reverse=True)
     # sorted(groupped_loci, key=trial_dict.get)
     clustered_loci = sorted(clustered_loci, key=lambda x: (chromosomes[x.primary.chrom], x.primary.loc))
-    print(len(clustered_loci))
     for cluster in clustered_loci:
         pass
+    total_mapped=0
+    for group in clustered_loci:
+        total_mapped += group.totalreads
     with open(outfile, "w", newline="") as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=',')  # comma delimited csv file
         # write csv headder to match expected format
         csv_writer.writerow(
-            ['Chrom', 'Sense', 'Loc', 'Total # IS Found', "complement read", "Alternate loci", "alternate complement loci", 'Nearest Gene', "In gene", "Distance to Gene (bp)"])
+            ['Chrom', 'Sense', 'Loc', 'Total # IS Found', "fraction of total", "complement read", "Alternate loci", "alternate complement loci", 'Nearest Gene', "In gene", "Distance to Gene (bp)"])
+        if percent > 0 and filteredfile:
+            filtered = open(filteredfile, "w", newline="")
+            filtered_writer = csv.writer(filtered, delimiter=',')  # comma delimited csv file
+            # write csv headder to match expected format
+            filtered_writer.writerow(
+                ['Chrom', 'Sense', 'Loc', 'Total # IS Found', "fraction of total", "complement read", "Alternate loci",
+                 "alternate complement loci", 'Nearest Gene', "In gene", "Distance to Gene (bp)"])
         for cluster in clustered_loci:
             loci_list = []
             for alt in cluster.loci_list[1:]:
@@ -165,16 +155,19 @@ def group(fastafile, csv_file, percent, outfile, loci_names):
             for alt in cluster.complement_loci_list[1:]:
                 comp_list.append(f"chr{alt.chrom}{alt.sense}:{alt.loc}")
             if cluster.complement_primary:
-                csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
+                csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads, int(cluster.totalreads)/int(total_mapped),
                        f"chr{cluster.complement_primary.chrom}{cluster.complement_primary.sense}"
                        f":{cluster.complement_primary.loc}", loci_list, comp_list, cluster.primary.gene, cluster.primary.ingene,
                        cluster.primary.dist_to_gene]
             else:
-                csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
+                csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads, int(cluster.totalreads)/int(total_mapped),
                            f"None", loci_list, comp_list, cluster.primary.gene,
                            cluster.primary.ingene,
                            cluster.primary.dist_to_gene]
-            csv_writer.writerow(csvline)
+            if int(cluster.totalreads)/int(total_mapped) > percent:
+                csv_writer.writerow(csvline)
+            elif filteredfile:
+                filtered_writer.writerow(csvline)
 
 
 if __name__ == "__main__":
@@ -184,5 +177,6 @@ if __name__ == "__main__":
     transcripts = "../reference_datasets/annotations/refseq.transcripts.bed"
     root_name = os.path.splitext(os.path.realpath(in_csv))[0]
     out_csv = f"{root_name}_grouped.csv"
+    filtered_csv = f"{root_name}_filtered.csv"
     loci_names = annotate.map_locus(transcripts, in_bam)
-    group(in_fasta, in_csv, .01, out_csv, loci_names)
+    group(in_fasta, in_csv, loci_names, out_csv, 0.005, filtered_csv)

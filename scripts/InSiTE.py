@@ -60,7 +60,7 @@ writelogo = 1  # 1#create a logo image of consensus sequence # requires getseqs 
 # reference file locations
 chromosome_ids = './reference_datasets/chromosomes.csv'
 bbmerge_location = './bins/bbmap/bbmerge-auto.sh'
-bowtie_location = 'bowtie2'
+bowtie_location = '/btapps/miniconda3/bin/bowtie2' #'bowtie2'
 bowtie_index_file = './reference_datasets/genomes/GRCh38.fna.bowtie_index/GCA_000001405.15_GRCh38_no_alt_analysis_set.' \
               'fna.bowtie_index'
 weblogo_location = 'weblogo'  # in PATH
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     ap.add_argument('--no_seqs', default=False, action='store_true',
                     help='do not get sequences from either entrez or local TwoBit genome around locations indicated '
                          'by genome_location_csv')
-    ap.add_argument('-z', '--compress_reads', action='store_true',
+    ap.add_argument('-u', '--uncompress_reads', action='store_true', default=False,
                     help='compress duplicate reads and reads shifted +/- 1nt, number of reads are compressed in csv, '
                          'fasta, and mapping outputs')
     ap.add_argument('-p', '--pairs', default='test02.fastq',
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     ap.add_argument('--close', action='append', type=int, help='distance in bp to be considered close to feature')
     ap.add_argument('--chromosome_ids', metavar='/path/to/chromosomes.csv',
                     default='./reference_datasets/chromosomes.csv')
-    ap.add_argument('--bowtielocation', metavar='/path/to/bowtie2', default='bowtie2')
+    ap.add_argument('--bowtielocation', metavar='/path/to/bowtie2', default='/btapps/miniconda3/bin/bowtie2')
     ap.add_argument('--bowtieindex', metavar='/path/to/bowtieindex',
                     default='./reference_datasets/genomes/GRCh38.fna.bowtie_index/'
                             'GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index')
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     userandomIS = args.rand_is
     userandomSEQS = args.rand_nt
     getseqs = not args.no_seqs
-    compressreads = args.compress_reads  # remove duplicate reads and reads shifted +/- 1 nt, number of reads are
+    compressreads = not args.uncompress_reads  # remove duplicate reads and reads shifted +/- 1 nt, number of reads are
     # compressed in csv and fasta
     getannotations = not args.no_annotate
     barcode = args.barcode

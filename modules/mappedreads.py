@@ -266,7 +266,8 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
     elif abundant:
         print(colorama.Fore.RED + f'Need to count reads to calculate most abundant sequences. If you want abundant '
                                   f'sequences, please specify compressreads too.' + colorama.Style.RESET_ALL)
-
+    else:
+        top_clone = topten = None
     ISbamfile.close()
     return readslist, unmapped, "\n".join(message), top_clone, topten  # ISbamfile
 

@@ -121,7 +121,7 @@ class Locus(object):
             self.sensenum = 2
             self.loc = int(int(row[2]) + 3)
 
-        [self.gene, self.ingene, self.dist_to_gene] = locus_names[self.chrom+self.loc]
+        [self.gene, self.ingene, self.dist_to_gene] = locus_names[str(self.chrom)+str(self.loc)]
         self.totalreads = row[4]
         self.similar_loci = []
         self.complement_loci = []

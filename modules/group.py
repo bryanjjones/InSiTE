@@ -111,7 +111,18 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
             if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
                 matched = True
                 if str(locus.chrom) == str(17):
-                    print(f'does {locus.name} have complement? {locus.complement_loci.name}. total reads:{locus.totalreadsboth}. Current champ: {groupped_loci[i][0].complement_loci.name}. total reads:{groupped_loci[i][0].totalreadsboth}.')
+                    out = f'does {locus.name} have complement? '
+                    if locus.complement_loci:
+                        out+=f"yes: {locus.complement_loci.name}. total reads:{locus.totalreadsboth}."
+                    else:
+                        out += f"no. Reads:{locus.totalreadsboth}."
+                    if groupped_loci[i][0]:
+                        out += f"Current champ is {groupped_loci[i][0].name}."
+                        if groupped_loci[i][0].complement_loci:
+                            out += f" with complement {groupped_loci[i][0].complement_loci.name}."
+                        else:
+                            out += f" without complement."
+                        out += f' total reads:{groupped_loci[i][0].totalreadsboth}.' 
                 if locus.complement_loci and (not groupped_loci[i][0].complement_loci or groupped_loci[i][0].totalreadsboth < locus.totalreadsboth):  # add locus to the front of the loci group if it has the most reads
                             groupped_loci[i].insert(0, locus)
                 elif not groupped_loci[i][0].complement_loci and groupped_loci[i][0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads

@@ -221,7 +221,7 @@ if __name__ == "__main__":
                  "../30-572263308/00_fastq/UBC-High-B4_R1_001",
                  "../30-572263308/00_fastq/UBC-Low-A2_R1_001", "../30-572263308/00_fastq/UBC-Low-B3_R1_001",
                  "../30-572263308/00_fastq/UBC-Low-C2_R1_001", "../30-572263308/00_fastq/UBC-Med-A3_R1_001"]
-    print(f'Begin processing {strr(len(file_list))} files.')
+    print(f'Begin processing {str(len(file_list))} files.')
     for file_root in file_list:
         print(f"Processing {file_root}...", end=" ")
         root_name = os.path.splitext(os.path.realpath(file_root))[0]

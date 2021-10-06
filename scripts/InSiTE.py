@@ -330,11 +330,14 @@ if __name__ == "__main__":
         print(f'FASTQ format input file: ' + colorama.Fore.YELLOW + f'{inputfile}' + colorama.Style.RESET_ALL)
         trimlog = FASTQ.Trim(inputfile, trimmedfastq, barcode, primer5, primer3, trim3, trim5, minimum_read_len)
         logging.debug(trimlog)
+        print("line 333") #TODO remove
         summary["raw reads"] = (int(len(open(inputfile).readlines()) / 4))  # 4 lines per entry in fastq
         summary["trimmed reads"] = (int(len(open(trimmedfastq).readlines()) / 4))
+        print("line 336")  # TODO remove
         if len(open(trimmedfastq).readlines()) == 0:
             logging.critical(f'No sequences left after trimming. Exiting')
             sys.exit(colorama.Fore.RED + f'No sequences left after trimming. Exiting' + colorama.Style.RESET_ALL)
+        print("line 340")  # TODO remove
         if userandomSEQS:  # replace all real reads with random NT
             trimlog = FASTQ.randomize(trimmedfastq, format='fastq')
             logging.debug(trimlog)
@@ -346,6 +349,7 @@ if __name__ == "__main__":
             #              + colorama.Style.RESET_ALL)
             #vector_tallies, non_vector_reads = mappedreads.filter_vector(vector_file, trimmedfastq, filetype="fastq",
             #                                                             trimmed_file=trimmedfastq)
+            print("line 352") #TODO remove
             bbduk_command = f'{bbduk_location} -Xmx1g in={trimmedfastq} out={vector_free_seqs} ref={vector_file} ' \
                             f'k={min(minimum_read_len,31)} hdist=1 stats=stats.txt findbestmatch=t nzo=f'
             runbin.Command(bbduk_command)

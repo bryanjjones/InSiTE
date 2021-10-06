@@ -104,7 +104,7 @@ def Trim(inputfile, outputfile, barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='
         message.append(f'cutting adapters/primers/barcods from reads using cutadapt. Writting output to {outputfile}')
         message.append(f'{command}')
         cutadapt = runbin.Command(command)
-        run = cutadapt.run(timeout=50000)
+        run = cutadapt.run(timeout=20000)
         print(run[1].decode())
         print(colorama.Fore.RED + f'{run[2].decode()}' + colorama.Style.RESET_ALL)
         message.append(run[1].decode())

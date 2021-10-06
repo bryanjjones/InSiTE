@@ -9,6 +9,7 @@ import statistics
 import colorama
 import Bio.Entrez
 
+Bio.Entrez.email = "bryan.jones@bio-techne.com"
 
 def featuretype_filter(feature, featuretype):
     """

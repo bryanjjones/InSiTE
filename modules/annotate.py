@@ -11,7 +11,7 @@ import Bio.Entrez
 import time
 
 Bio.Entrez.email = "bryan.jones@bio-techne.com"
-Bio.Entrez.api_key = "679368bc3fef47bb440fb743c889befe4e09 "
+Bio.Entrez.api_key = "679368bc3fef47bb440fb743c889befe4e09"
 Entrez_last_request = 0
 
 def featuretype_filter(feature, featuretype):

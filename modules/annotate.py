@@ -7,6 +7,7 @@ import sys
 import multiprocessing
 import statistics
 import colorama
+import Bio.Entrez
 
 
 def featuretype_filter(feature, featuretype):
@@ -77,6 +78,11 @@ def map_locus(featurefile, bam):
         locus_names[f"{str(chrom)}:{str(loc)}"] = [ID, infeature, distance]
     return locus_names
 
+def retrieve_gene_definition(gene_id):
+    gene_query = Bio.Entrez.efetch(db="nucleotide", id=gene_id, rettype="gb", retmode="text")
+    headder_row = (gene_query.readline().strip())
+    gene_definition = gene_query.readline().strip()[12:]  # second line after "DEFINITION " has full description
+    return gene_definition
 
     # if features is not None:
     #     if featurefile:

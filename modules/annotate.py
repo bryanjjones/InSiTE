@@ -88,7 +88,6 @@ def retrieve_gene_definition(gene_id):
     #     time.sleep(0.1)
     try:
         gene_query = Bio.Entrez.efetch(db="nuccore", id=gene_id, rettype="gb", retmode="text")
-        time.sleep(0.1)
     except Exception as e:
         print("\n")
         print(e)

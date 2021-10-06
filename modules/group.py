@@ -86,6 +86,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
         csv_reader = csv.reader(csv_file, delimiter=",")
         line_count = 0
         for row in csv_reader:
+            line_count += 1
             if len(row) > 0:
                 if row[0] == "Chrom":  # headder row
                     pass
@@ -98,6 +99,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                             break
             else:
                 pass
+            print(f'IS processed: {line_count}', end='\r')
     print(f'Mapped all Integration Sites to nearest gene...')
     # connect complement loci
     loci_with_complement = []

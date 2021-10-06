@@ -195,7 +195,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                            int(cluster.totalreads) / int(total_mapped),
                            f"chr{cluster.complement_primary.chrom}{cluster.complement_primary.sense}"
                            f":{cluster.complement_primary.loc}", loci_list, comp_list, cluster.primary.ingene,
-                           cluster.primary.dist_to_gene, cluster.primary.gene, cluster.primary.gen_definition]
+                           cluster.primary.dist_to_gene, cluster.primary.gene, cluster.primary.gene_definition]
             else:
                 csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
                            int(cluster.totalreads) / int(total_mapped),

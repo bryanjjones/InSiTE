@@ -28,6 +28,7 @@ chromosomes = {'1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '
 Bio.Entrez.email = "bryan.jones@bio-techne.com"
 print(f"Initialized Entrez and aligner")
 
+
 class Locus(object):
     def __init__(self, row, locus_names):
         self.chrom = str(row[0])
@@ -50,6 +51,9 @@ class Locus(object):
         self.gene_definition = ""
 
 
+print(f"Initialized Locus class")
+
+
 class LocusCluster(object):
     def __init__(self, primary_locus, loci_list):
         self.primary = primary_locus
@@ -61,6 +65,9 @@ class LocusCluster(object):
                 self.complement_loci_list.append(locus.complement_loci)
         self.loci_list = loci_list
         self.complement_primary = primary_locus.complement_loci
+
+
+print(f"Initialized LocusCluster class")
 
 
 def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile=None):
@@ -200,6 +207,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                 filtered_writer.writerow(csvline)
     print(f'wrote output file {outfile}.')
 
+print(f"Initialized group function.")
 
 if __name__ == "__main__":
     file_list = ["../30-572263308/00_fastq/UBC-Med-B2_R1_001", "../30-572263308/00_fastq/UBC-Low-D2_R1_001",

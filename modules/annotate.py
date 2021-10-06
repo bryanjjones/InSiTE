@@ -8,8 +8,10 @@ import multiprocessing
 import statistics
 import colorama
 import Bio.Entrez
+import time
 
 Bio.Entrez.email = "bryan.jones@bio-techne.com"
+Entrez_last_request = 0
 
 def featuretype_filter(feature, featuretype):
     """
@@ -80,7 +82,11 @@ def map_locus(featurefile, bam):
     return locus_names
 
 def retrieve_gene_definition(gene_id):
+    global Entrez_last_request
+    if time.time()-Entrez_last_request < 0.4:
+        time.sleep(0.4-time.time()-Entrez_last_request)
     gene_query = Bio.Entrez.efetch(db="nucleotide", id=gene_id, rettype="gb", retmode="text")
+    Entrez_last_request = time.time()
     headder_row = (gene_query.readline().strip())
     gene_definition = gene_query.readline().strip()[12:]  # second line after "DEFINITION " has full description
     return gene_definition

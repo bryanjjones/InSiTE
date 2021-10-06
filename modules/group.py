@@ -199,7 +199,7 @@ if __name__ == "__main__":
     for file in file_list:
         root_name = os.path.splitext(os.path.realpath(file))[0]
         in_fasta = f"{root_name}_retrieved_2bit.fasta"
-        in_csv = f"{root_name}_mappings.csv"
+        in_csv = f"{root_name}IS_mappings.csv"
         in_bam = f"{root_name}IS.bam"
         transcripts = "../reference_datasets/annotations/refseq.transcripts.bed"
         root_name = os.path.splitext(os.path.realpath(in_csv))[0]

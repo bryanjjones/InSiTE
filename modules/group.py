@@ -98,7 +98,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                             break
             else:
                 pass
-    print(f'Mapped all Integration Sites to nearest gene...', end=" ")
+    print(f'Mapped all Integration Sites to nearest gene...')
     # connect complement loci
     loci_with_complement = []
     for locus in loci:
@@ -119,7 +119,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                 loci_with_complement[-1].totalreadsboth = int(loci_with_complement[-1].totalreads) + int(
                     other_locus.totalreads)
     loci = loci_with_complement
-    print(f'Matched Insertion site with complementary Insertion site (if present)...', end=" ")
+    print(f'Matched Insertion site with complementary Insertion site (if present)...')
     # group similar loci
     groupped_loci = []
     for locus in loci:
@@ -161,7 +161,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
     clustered_loci = []
     for loci_group in groupped_loci:
         clustered_loci.append(LocusCluster(loci_group[0], loci_group))
-    print(f'Grouped similar loci...', end=" ")
+    print(f'Grouped similar loci...')
     clustered_loci = sorted(clustered_loci, key=lambda x: (chromosomes[x.primary.chrom], x.primary.loc))
     for cluster in clustered_loci:
         pass
@@ -233,5 +233,5 @@ if __name__ == "__main__":
         out_csv = f"{root_name}_grouped.csv"
         filtered_csv = f"{root_name}_filtered.csv"
         loci_names = annotate.map_locus(transcripts, in_bam)
-        print(f'Retrieved gene IDs... ', end=" ")
+        print(f'Retrieved gene IDs... ')
         group(in_fasta, in_csv, loci_names, out_csv, 0.005, filtered_csv)

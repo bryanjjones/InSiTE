@@ -86,7 +86,10 @@ def retrieve_gene_definition(gene_id):
     global Entrez_last_request
     if time.time()-Entrez_last_request < 0.1: #TODO time inteval could be decreased (faster) if used API key for Entrez
         time.sleep(0.1)
-    gene_query = Bio.Entrez.efetch(db="nucleotide", id=gene_id, rettype="gb", retmode="text")
+    try:
+        gene_query = Bio.Entrez.efetch(db="nucleotide", id=gene_id, rettype="gb", retmode="text")
+    except:
+        print(gene_id)
     Entrez_last_request = time.time()
     headder_row = (gene_query.readline().strip())
     gene_definition = gene_query.readline().strip()[12:]  # second line after "DEFINITION " has full description

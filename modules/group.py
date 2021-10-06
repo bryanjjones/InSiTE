@@ -192,7 +192,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                 csvline = [cluster.primary.chrom, cluster.primary.sense, cluster.primary.loc, cluster.totalreads,
                            int(cluster.totalreads) / int(total_mapped),
                            f"None", loci_list, comp_list, cluster.primary.ingene,
-                           cluster.primary.dist_to_gene, cluster.primary.gene, cluster.primary.gen_definition]
+                           cluster.primary.dist_to_gene, cluster.primary.gene, cluster.primary.gene_definition]
             if int(cluster.totalreads) / int(total_mapped) > percent:
                 csv_writer.writerow(csvline)
             elif filteredfile:

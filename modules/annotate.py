@@ -83,8 +83,9 @@ def map_locus(featurefile, bam):
 
 def retrieve_gene_definition(gene_id):
     global Entrez_last_request
-    if time.time()-Entrez_last_request < 0.4:
-        time.sleep(0.4-time.time()-Entrez_last_request)
+    time_interval = time.time()-Entrez_last_request
+    if time_interval < 0.4:
+        time.sleep(0.4-time_interval)
     gene_query = Bio.Entrez.efetch(db="nucleotide", id=gene_id, rettype="gb", retmode="text")
     Entrez_last_request = time.time()
     headder_row = (gene_query.readline().strip())

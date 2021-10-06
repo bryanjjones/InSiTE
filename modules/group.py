@@ -110,20 +110,20 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
         for i in range(len(groupped_loci)):
             if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
                 matched = True
-                if str(locus.chrom) == str(17):
-                    out = f'does {locus.name} have complement? '
-                    if locus.complement_loci:
-                        out += f"yes: {locus.complement_loci.name}. total reads:{locus.totalreadsboth}."
-                    else:
-                        out += f"no. Reads:{locus.totalreadsboth}."
-                    if groupped_loci[i][0]:
-                        out += f"Current champ is {groupped_loci[i][0].name}."
-                        if groupped_loci[i][0].complement_loci:
-                            out += f" with complement {groupped_loci[i][0].complement_loci.name}."
-                        else:
-                            out += f" without complement."
-                        out += f' total reads:{groupped_loci[i][0].totalreadsboth}.'
-                    print(out)
+                # if str(locus.chrom) == str(17):
+                #     out = f'does {locus.name} have complement? '
+                #     if locus.complement_loci:
+                #         out += f"yes: {locus.complement_loci.name}. total reads:{locus.totalreadsboth}."
+                #     else:
+                #         out += f"no. Reads:{locus.totalreadsboth}."
+                #     if groupped_loci[i][0]:
+                #         out += f"Current champ is {groupped_loci[i][0].name}."
+                #         if groupped_loci[i][0].complement_loci:
+                #             out += f" with complement {groupped_loci[i][0].complement_loci.name}."
+                #         else:
+                #             out += f" without complement."
+                #         out += f' total reads:{groupped_loci[i][0].totalreadsboth}.'
+                #     print(out)
                 if locus.complement_loci:
                     if not groupped_loci[i][0].complement_loci:
                         groupped_loci[i].insert(0, locus)

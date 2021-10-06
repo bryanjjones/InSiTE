@@ -88,8 +88,10 @@ def retrieve_gene_definition(gene_id):
         time.sleep(0.1)
     try:
         gene_query = Bio.Entrez.efetch(db="nucleotide", id=gene_id, rettype="gb", retmode="text")
-    except:
+    except Exception as e:
+        print(e)
         print(gene_id)
+        exit()
     Entrez_last_request = time.time()
     headder_row = (gene_query.readline().strip())
     gene_definition = gene_query.readline().strip()[12:]  # second line after "DEFINITION " has full description

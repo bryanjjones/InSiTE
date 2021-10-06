@@ -11,6 +11,7 @@ import Bio.Entrez
 import time
 
 Bio.Entrez.email = "bryan.jones@bio-techne.com"
+Bio.Entrez.api_key = "679368bc3fef47bb440fb743c889befe4e09 "
 Entrez_last_request = 0
 
 def featuretype_filter(feature, featuretype):
@@ -82,10 +83,10 @@ def map_locus(featurefile, bam):
     return locus_names
 
 def retrieve_gene_definition(gene_id):
-    global Entrez_last_request
-    time_interval = time.time()-Entrez_last_request
-    if time_interval < 0.4: #TODO time inteval could be decreased (faster) if used API key for Entrez
-        time.sleep(0.4-time_interval)
+    # global Entrez_last_request
+    # time_interval = time.time()-Entrez_last_request
+    # if time_interval < 0.4: #TODO time inteval could be decreased (faster) if used API key for Entrez
+    #     time.sleep(0.4-time_interval)
     gene_query = Bio.Entrez.efetch(db="nucleotide", id=gene_id, rettype="gb", retmode="text")
     Entrez_last_request = time.time()
     headder_row = (gene_query.readline().strip())

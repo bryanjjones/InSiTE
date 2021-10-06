@@ -65,17 +65,17 @@ class LocusCluster(object):
 def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile=None):
     if not outfile:
         outfile = f"{os.path.splitext(os.path.realpath(csv_file))[0]}_grouped.csv"
-
     loci = []
     seqs = []
     for record in Bio.SeqIO.parse(fastafile, "fasta"):
         seqs.append(record)
         if seqs[-1].name.split(":")[0][-1] == "+":
             seqs[-1].id = seqs[-1].name.split(":")[0] + str(int(min(seqs[-1].name.split(":")[1].split(
-                "-"))) + 53)  # [seqs[-1].name.split(":")[0][3:-1], seqs[-1].name.split(":")[0][-1], int(min(seqs[-1].name.split(":")[1].split("-")))+53]  #TODO fix 3bp offset
+                "-"))) + 53)  # [seqs[-1].name.split(":")[0][3:-1], seqs[-1].name.split(":")[0][-1], int(min(seqs[-1].name.split(":")[1].split("-")))+53]  #FIXME fix 3bp offset
         elif seqs[-1].name.split(":")[0][-1] == "-":
             seqs[-1].id = seqs[-1].name.split(":")[0] + str(int(min(seqs[-1].name.split(":")[1].split(
                 "-"))) + 47)  # TODO fix 3bp offset
+            #TODO it would be better to use sequences from actual fastq files instead of retrieved sequences.
     with open(csv_file) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=",")
         line_count = 0
@@ -92,14 +92,19 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                             break
             else:
                 pass
+    print(f'Mapped all Integration Sites to nearest gene...', end=" ")
     # connect complement loci
     loci_with_complement = []
     for locus in loci:
         loci_with_complement.append(locus)
+        complement_sense = ""
         if loci_with_complement[-1].sense == "+":
             complement_sense = "-"
         elif loci_with_complement[-1].sense == "-":
             complement_sense = "+"
+        else:
+            print(f'\nsense is not + or -')
+            exit()
         complement_name = "chr{0}{1}{2}".format(str(loci_with_complement[-1].chrom), complement_sense,
                                                 str(loci_with_complement[-1].loc))
         for other_locus in loci:
@@ -108,12 +113,13 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                 loci_with_complement[-1].totalreadsboth = int(loci_with_complement[-1].totalreads) + int(
                     other_locus.totalreads)
     loci = loci_with_complement
+    print(f'Matched Insertion site with complementary Insertion site (if present)...', end=" ")
     # group similar loci
     groupped_loci = []
     for locus in loci:
         matched = False
         for i in range(len(groupped_loci)):
-            if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold:
+            if aligner.align(locus.sequence[53:], groupped_loci[i][0].sequence[53:]).score >= score_threshold: #FIXME 3 bp offset
                 matched = True
                 # if str(locus.chrom) == str(17):
                 #     out = f'does {locus.name} have complement? '
@@ -132,14 +138,12 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                 if locus.complement_loci:
                     if not groupped_loci[i][0].complement_loci:
                         groupped_loci[i].insert(0, locus)
-                    elif groupped_loci[i][
-                        0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
+                    elif groupped_loci[i][0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
                         groupped_loci[i].insert(0, locus)
                     else:
                         groupped_loci[i].append(locus)
                 elif not groupped_loci[i][0].complement_loci:
-                    if groupped_loci[i][
-                        0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
+                    if groupped_loci[i][0].totalreadsboth < locus.totalreadsboth:  # add locus to the front of the loci group if it has the most reads
                         groupped_loci[i].insert(0, locus)
                     else:
                         groupped_loci[i].append(locus)
@@ -149,23 +153,15 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
         if not matched:
             groupped_loci.append([locus])
     clustered_loci = []
-    for group in groupped_loci:
-        clustered_loci.append(LocusCluster(group[0], group))
-    # for i in range
-    #     #if locus.
-    #     #[53:] 0.75 target
-    #     for seq in seqs:
-    #         if seq.id == loci[-1].name:
-    #             loci[-1].sequence = seq.seq
-    # Bio.SeqIO.write(seqs, outputfile, "fasta")
-    # groupped_loci.sort(key=lambda x: x.primary.chrom, reverse=True)
-    # sorted(groupped_loci, key=trial_dict.get)
+    for loci_group in groupped_loci:
+        clustered_loci.append(LocusCluster(loci_group[0], loci_group))
+    print(f'Grouped similar loci...', end=" ")
     clustered_loci = sorted(clustered_loci, key=lambda x: (chromosomes[x.primary.chrom], x.primary.loc))
     for cluster in clustered_loci:
         pass
     total_mapped = 0
-    for group in clustered_loci:
-        total_mapped += group.totalreads
+    for loci_group in clustered_loci:
+        total_mapped += loci_group.totalreads
     with open(outfile, "w", newline="") as csv_file:
         csv_writer = csv.writer(csv_file, delimiter=',')  # comma delimited csv file
         # write csv headder to match expected format
@@ -201,6 +197,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                 csv_writer.writerow(csvline)
             elif filteredfile:
                 filtered_writer.writerow(csvline)
+    print(f'wrote output file {outfile}.')
 
 
 if __name__ == "__main__":
@@ -218,6 +215,7 @@ if __name__ == "__main__":
                  "../30-572263308/00_fastq/UBC-Low-A2_R1_001.fastq", "../30-572263308/00_fastq/UBC-Low-B3_R1_001.fastq",
                  "../30-572263308/00_fastq/UBC-Low-C2_R1_001.fastq", "../30-572263308/00_fastq/UBC-Med-A3_R1_001.fastq"]
     for file in file_list:
+        print(f"Processing {file}...", end=" ")
         root_name = os.path.splitext(os.path.realpath(file))[0]
         in_fasta = f"{root_name}_retrieved_2bit.fasta"
         in_csv = f"{root_name}_IS_mappings.csv"
@@ -227,4 +225,5 @@ if __name__ == "__main__":
         out_csv = f"{root_name}_grouped.csv"
         filtered_csv = f"{root_name}_filtered.csv"
         loci_names = annotate.map_locus(transcripts, in_bam)
+        print(f'Retrieved gene IDs... ', end=" ")
         group(in_fasta, in_csv, loci_names, out_csv, 0.005, filtered_csv)

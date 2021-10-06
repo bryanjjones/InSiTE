@@ -109,7 +109,6 @@ def Trim(inputfile, outputfile, barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='
         print(colorama.Fore.RED + f'{run[2].decode()}' + colorama.Style.RESET_ALL)
         message.append(run[1].decode())
         message.append(f'{run[2].decode()}')
-    print("got this far") #TODO remove
     for file in tempfiles:
         try:
             os.remove(file)

@@ -201,22 +201,22 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
 
 
 if __name__ == "__main__":
-    file_list = ["../30-572263308/00_fastq/UBC-Med-B2_R1_001.fastq", "../30-572263308/00_fastq/UBC-Low-D2_R1_001.fastq",
-                 "../30-572263308/00_fastq/PGK-High-A2_R1_001.fastq",
-                 "../30-572263308/00_fastq/PGK-High-C1_R1_001.fastq",
-                 "../30-572263308/00_fastq/PGK-High-D1_R1_001.fastq",
-                 "../30-572263308/00_fastq/PGK-High-D2_R1_001.fastq",
-                 "../30-572263308/00_fastq/PGK-High-D3_R1_001.fastq",
-                 "../30-572263308/00_fastq/PGK-Low-A1_R1_001.fastq", "../30-572263308/00_fastq/PGK-Low-A2_R1_001.fastq",
-                 "../30-572263308/00_fastq/PGK-Low-A3_R1_001.fastq", "../30-572263308/00_fastq/PGK-Low-B1_R1_001.fastq",
-                 "../30-572263308/00_fastq/PGK-Low-B2_R1_001.fastq", "../30-572263308/00_fastq/PGK-Low-C1_R1_001.fastq",
-                 "../30-572263308/00_fastq/PGK-Low-C2_R1_001.fastq",
-                 "../30-572263308/00_fastq/UBC-High-B4_R1_001.fastq",
-                 "../30-572263308/00_fastq/UBC-Low-A2_R1_001.fastq", "../30-572263308/00_fastq/UBC-Low-B3_R1_001.fastq",
-                 "../30-572263308/00_fastq/UBC-Low-C2_R1_001.fastq", "../30-572263308/00_fastq/UBC-Med-A3_R1_001.fastq"]
-    for file in file_list:
-        print(f"Processing {file}...", end=" ")
-        root_name = os.path.splitext(os.path.realpath(file))[0]
+    file_list = ["../30-572263308/00/UBC-Med-B2_R1_001", "../30-572263308/00/UBC-Low-D2_R1_001",
+                 "../30-572263308/00/PGK-High-A2_R1_001",
+                 "../30-572263308/00/PGK-High-C1_R1_001",
+                 "../30-572263308/00/PGK-High-D1_R1_001",
+                 "../30-572263308/00/PGK-High-D2_R1_001",
+                 "../30-572263308/00/PGK-High-D3_R1_001",
+                 "../30-572263308/00/PGK-Low-A1_R1_001", "../30-572263308/00/PGK-Low-A2_R1_001",
+                 "../30-572263308/00/PGK-Low-A3_R1_001", "../30-572263308/00/PGK-Low-B1_R1_001",
+                 "../30-572263308/00/PGK-Low-B2_R1_001", "../30-572263308/00/PGK-Low-C1_R1_001",
+                 "../30-572263308/00/PGK-Low-C2_R1_001",
+                 "../30-572263308/00/UBC-High-B4_R1_001",
+                 "../30-572263308/00/UBC-Low-A2_R1_001", "../30-572263308/00/UBC-Low-B3_R1_001",
+                 "../30-572263308/00/UBC-Low-C2_R1_001", "../30-572263308/00/UBC-Med-A3_R1_001"]
+    for file_root in file_list:
+        print(f"Processing {file_root}...", end=" ")
+        root_name = os.path.splitext(os.path.realpath(file_root))[0]
         in_fasta = f"{root_name}_retrieved_2bit.fasta"
         in_csv = f"{root_name}_IS_mappings.csv"
         in_bam = f"{root_name}IS.bam"

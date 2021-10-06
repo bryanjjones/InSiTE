@@ -15,6 +15,7 @@ import runbin
 import random
 import annotate
 
+print(f"starting group.py")
 aligner = Bio.Align.PairwiseAligner()
 aligner.mode = 'global'
 aligner.open_gap_score = -2
@@ -25,7 +26,7 @@ chromosomes = {'1': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '
                '13': 13, '14': 14, '15': 15, '16': 16, '17': 17, '18': 18, '19': 19, '20': 20, '21': 21, '22': 22,
                '23': 23, '24': 24, "X": 25, "Y": 26, "MT": 27}
 Bio.Entrez.email = "bryan.jones@bio-techne.com"
-
+print(f"Initialized Entrez and aligner")
 
 class Locus(object):
     def __init__(self, row, locus_names):

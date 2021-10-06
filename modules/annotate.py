@@ -84,10 +84,11 @@ def map_locus(featurefile, bam):
 
 def retrieve_gene_definition(gene_id):
     global Entrez_last_request
-    if time.time()-Entrez_last_request < 0.1: #TODO time inteval could be decreased (faster) if used API key for Entrez
-        time.sleep(0.1)
+    # if time.time()-Entrez_last_request < 0.1: #TODO time inteval could be decreased (faster) if used API key for Entrez
+    #     time.sleep(0.1)
     try:
-        gene_query = Bio.Entrez.efetch(db="nucleotide", id=gene_id, rettype="gb", retmode="text")
+        gene_query = Bio.Entrez.efetch(db="nuccore", id=gene_id, rettype="gb", retmode="text")
+        time.sleep(0.1)
     except Exception as e:
         print(e)
         print(gene_id)

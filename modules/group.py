@@ -100,6 +100,7 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
             else:
                 pass
             print(f'IS processed: {line_count}', end='\r')
+    print(f'IS processed: {line_count}')
     print(f'Mapped all Integration Sites to nearest gene...')
     # connect complement loci
     loci_with_complement = []
@@ -210,19 +211,8 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
 print(f"Initialized group function.")
 
 if __name__ == "__main__":
-    file_list = ["../30-572263308/00_fastq/UBC-Med-B2_R1_001", "../30-572263308/00_fastq/UBC-Low-D2_R1_001",
-                 "../30-572263308/00_fastq/PGK-High-A2_R1_001",
-                 "../30-572263308/00_fastq/PGK-High-C1_R1_001",
-                 "../30-572263308/00_fastq/PGK-High-D1_R1_001",
-                 "../30-572263308/00_fastq/PGK-High-D2_R1_001",
-                 "../30-572263308/00_fastq/PGK-High-D3_R1_001",
-                 "../30-572263308/00_fastq/PGK-Low-A1_R1_001", "../30-572263308/00_fastq/PGK-Low-A2_R1_001",
-                 "../30-572263308/00_fastq/PGK-Low-A3_R1_001", "../30-572263308/00_fastq/PGK-Low-B1_R1_001",
-                 "../30-572263308/00_fastq/PGK-Low-B2_R1_001", "../30-572263308/00_fastq/PGK-Low-C1_R1_001",
-                 "../30-572263308/00_fastq/PGK-Low-C2_R1_001",
-                 "../30-572263308/00_fastq/UBC-High-B4_R1_001",
-                 "../30-572263308/00_fastq/UBC-Low-A2_R1_001", "../30-572263308/00_fastq/UBC-Low-B3_R1_001",
-                 "../30-572263308/00_fastq/UBC-Low-C2_R1_001", "../30-572263308/00_fastq/UBC-Med-A3_R1_001"]
+    file_list = [None]
+    #TODO add flag ability: filename(s), minimum threshold, "transcript" file
     print(f'Begin processing {str(len(file_list))} files.')
     for file_root in file_list:
         print(f"Processing {file_root}...")

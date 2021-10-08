@@ -92,6 +92,8 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
                     pass
                 else:
                     loci.append(Locus(row, loci_names))
+                    if complex_loci_name:
+                        loci[-1].gene = f"{loci[-1].gene.split('_')[0]}_{loci[-1].gene.split('_')[1]}" # bed files from table viewere sometimes have complex names, this will extract the Gene ID from the name.
                     loci[-1].gene_definition = annotate.retrieve_gene_definition(loci[-1].gene)
                     for seq in seqs:
                         if seq.id == loci[-1].name:
@@ -224,6 +226,7 @@ if __name__ == "__main__":
         in_csv = f"{root_name}_IS_mappings.csv"
         in_bam = f"{root_name}IS.bam"
         transcripts = "../reference_datasets/annotations/refseq.codingexons.bed"
+        complex_loci_name = True
         root_name = os.path.splitext(os.path.realpath(in_csv))[0]
         out_csv = f"{root_name}_grouped.csv"
         filtered_csv = f"{root_name}_filtered.csv"

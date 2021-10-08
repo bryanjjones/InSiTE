@@ -214,7 +214,7 @@ if __name__ == "__main__":
     file_list = []
     with open("../examples/file_list.csv") as filelist:
         for name in filelist:
-            file_list.append(name)
+            file_list.append(name.strip())
     #TODO add flag ability: filename(s), minimum threshold, "transcript" file
     print(f'Begin processing {str(len(file_list))} files.')
     for file_root in file_list:

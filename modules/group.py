@@ -211,7 +211,10 @@ def group(fastafile, csv_file, loci_names, outfile=None, percent=0, filteredfile
 print(f"Initialized group function.")
 
 if __name__ == "__main__":
-    file_list = [None]
+    file_list = []
+    with open("../examples/file_list.csv") as filelist:
+        for name in filelist:
+            file_list.append(name)
     #TODO add flag ability: filename(s), minimum threshold, "transcript" file
     print(f'Begin processing {str(len(file_list))} files.')
     for file_root in file_list:
@@ -220,7 +223,7 @@ if __name__ == "__main__":
         in_fasta = f"{root_name}_retrieved_2bit.fasta"
         in_csv = f"{root_name}_IS_mappings.csv"
         in_bam = f"{root_name}IS.bam"
-        transcripts = "../reference_datasets/annotations/refseq.transcripts.bed"
+        transcripts = "../reference_datasets/annotations/refseq.codingexons.bed"
         root_name = os.path.splitext(os.path.realpath(in_csv))[0]
         out_csv = f"{root_name}_grouped.csv"
         filtered_csv = f"{root_name}_filtered.csv"

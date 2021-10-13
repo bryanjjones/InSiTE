@@ -1,27 +1,29 @@
 #!/btapps/miniconda3/bin/python3
 from __future__ import print_function
-import annotate
 import csv
 import pybedtools
-import argparse
 import os
-import sys
-import multiprocessing
-import statistics
-import colorama
-import Bio.Entrez
-import time
 
-file_list = ["./PGK-High-A2_R1_001_IS_mappings_grouped.csv", "./PGK-Low-A3_R1_001_IS_mappings_grouped.csv",
-             "./UBC-Low-B3_R1_001_IS_mappings_grouped.csv", "./PGK-High-C1_R1_001_IS_mappings_grouped.csv",
-             "./PGK-Low-B1_R1_001_IS_mappings_grouped.csv", "./UBC-Low-C2_R1_001_IS_mappings_grouped.csv",
-             "./PGK-High-D1_R1_001_IS_mappings_grouped.csv", "./PGK-Low-B2_R1_001_IS_mappings_grouped.csv",
-             "./UBC-Low-D2_R1_001_IS_mappings_grouped.csv", "./PGK-High-D2_R1_001_IS_mappings_grouped.csv",
-             "./PGK-Low-C1_R1_001_IS_mappings_grouped.csv", "./UBC-Med-A3_R1_001_IS_mappings_grouped.csv",
-             "./PGK-High-D3_R1_001_IS_mappings_grouped.csv", "./PGK-Low-C2_R1_001_IS_mappings_grouped.csv",
-             "./UBC-Med-B2_R1_001_IS_mappings_grouped.csv", "./PGK-Low-A1_R1_001_IS_mappings_grouped.csv",
-             "./UBC-High-B4_R1_001_IS_mappings_grouped.csv", "./PGK-Low-A2_R1_001_IS_mappings_grouped.csv",
-             "./UBC-Low-A2_R1_001_IS_mappings_grouped.csv"]
+
+file_list = ["../30-572263308/00_fastq/PGK-High-A2_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/PGK-Low-A3_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/UBC-Low-B3_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/PGK-High-C1_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/PGK-Low-B1_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/UBC-Low-C2_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/PGK-High-D1_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/PGK-Low-B2_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/UBC-Low-D2_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/PGK-High-D2_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/PGK-Low-C1_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/UBC-Med-A3_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/PGK-High-D3_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/PGK-Low-C2_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/UBC-Med-B2_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/PGK-Low-A1_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/UBC-High-B4_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/PGK-Low-A2_R1_001_IS_mappings_grouped.csv",
+             "../30-572263308/00_fastq/UBC-Low-A2_R1_001_IS_mappings_grouped.csv"]
 
 
 def startsite(feature):

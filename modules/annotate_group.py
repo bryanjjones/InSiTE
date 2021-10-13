@@ -34,7 +34,7 @@ def startsite(feature):
     return feature
 
 
-def closest_single(files, ref = '../../reference_datasets/annotations/refseq.transcripts.bed', write=True):
+def closest_single(files, ref='../reference_datasets/annotations/refseq.transcripts.bed', write=True):
     for file in files:
         output = None
         if write:

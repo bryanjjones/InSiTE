@@ -51,16 +51,16 @@ def closest_single(files, ref='../reference_datasets/annotations/refseq.transcri
                 if len(row) > 0:
                     if row[0] == "Chrom":  # headder row
                         row.append("distance to nearest TSS")
+                        row.append("nearest TSS ID")
                         if output:
                             output.writerow(row)
                     else:
                         # locus = f'chr{row[0]} {row[2]} {row[2]}'
                         locus = pybedtools.BedTool(f'chr{row[0]} {row[2]} {row[2]}', from_string=True)
-                        print(locus)
                         b = locus.closest(reference, d=True, t="first")
                         for i in b:
-                            print(i.count)
                             row.append(i.count)
+                            row.append(i.fields[6])
                         if output:
                             output.writerow(row)
 
@@ -82,27 +82,28 @@ if __name__ == "__main__":
 #
 
 
-# reference = pybedtools.BedTool('../../reference_datasets/annotations/refseq.transcripts.bed').sort()
-# reference = reference.each(startsite).sort().saveas()
-# csv_file = open("./PGK-High-A2_R1_001_IS_mappings_grouped.csv")
-# csv_reader = csv.reader(csv_file, delimiter=",")
-# loci = ""
-# for row in csv_reader:
-#     if row[0] == "Chrom":
-#         pass
-#     else:
-#         # loci = loci + f'\nchr{row[0]} {row[2]} {row[2]}'
-#         locus = pybedtools.BedTool(f'chr{row[0]} {row[2]} {row[2]}', from_string=True)
-#         # print(locus)
-#         b = locus.closest(reference, d=True, t="first")
-#         for i in b:
-#             row.append(i.count)
-#             # print(i.count)
-#         print(row)
-# loci_bed = pybedtools.BedTool(loci, from_string=True)
-# loci_bed = loci_bed.sort().saveas()
-# print(loci_bed)
-# b = loci_bed.closest(reference, d=True, t="first")
-# for i in b:
-#     print(i.count)
-#
+reference = pybedtools.BedTool('../reference_datasets/annotations/refseq.transcripts.bed').sort()
+reference = reference.each(startsite).sort().saveas()
+csv_file = open("../30-572263308/00_fastq/PGK-High-A2_R1_001_IS_mappings_grouped.csv")
+csv_reader = csv.reader(csv_file, delimiter=",")
+loci = ""
+for row in csv_reader:
+    if row[0] == "Chrom":
+        pass
+    else:
+        # loci = loci + f'\nchr{row[0]} {row[2]} {row[2]}'
+        locus = pybedtools.BedTool(f'chr{row[0]} {row[2]} {row[2]}', from_string=True)
+        # print(locus)
+        b = locus.closest(reference, d=True, t="first")
+        for i in b:
+            row.append(i.count)
+            print(i.count)
+        print(row)
+loci_bed = pybedtools.BedTool(loci, from_string=True)
+loci_bed = loci_bed.sort().saveas()
+print(loci_bed)
+b = loci_bed.closest(reference, d=True, t="first")
+for i in b:
+    print(i.count)
+
+

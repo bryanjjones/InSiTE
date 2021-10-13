@@ -65,7 +65,7 @@ def closest_single(files, ref='../reference_datasets/annotations/refseq.transcri
                             output.writerow(row)
 
 if __name__ == "__main__":
-    closest_single(file_list, ref='../../reference_datasets/annotations/refseq.transcripts.bed', write=True)
+    closest_single(file_list, ref='../reference_datasets/annotations/refseq.transcripts.bed', write=True)
 
 #
 #         loci.append(Locus(row, loci_names))

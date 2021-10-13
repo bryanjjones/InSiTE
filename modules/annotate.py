@@ -154,7 +154,7 @@ def startsite(feature):
 
 # returns list of distances and BedTool object containing list of distances between each feature in a given queryfile
 # (bam) and the closest feature in the given refereence file. given featurename used for labeling output.
-# If position=start, distance to startting nt of reference features will be used to calculate distance.
+# If position=start, distance to starting nt of reference features will be used to calculate distance.
 def closest(queryfilename, reference_filename, featurename='TSS', position="start", distances=[1000], quiet=False):
     message = []
     distancelist = []

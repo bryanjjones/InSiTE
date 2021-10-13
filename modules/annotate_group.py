@@ -39,7 +39,7 @@ def closest_single(files, ref = '../../reference_datasets/annotations/refseq.tra
         output = None
         if write:
             out_css = f"{os.path.splitext(os.path.realpath(file))[0]}_wTSSdist.csv"
-            outfile = open(out_css)
+            outfile = open(out_css, "w", newline="")
             output = csv.writer(outfile, delimiter=',')
         reference = pybedtools.BedTool(ref).sort()
         reference = reference.each(startsite).sort().saveas()

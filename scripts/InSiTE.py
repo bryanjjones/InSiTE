@@ -251,6 +251,15 @@ if __name__ == "__main__":
 
     warnings = []
     # sanity checks:
+    # TODO check if given files exist (sequence files and vector sequence file)
+    if not os.path.isfile(inputfile):
+        warnings.append(f"{inputfile} does not exist")
+        sys.exit(
+            colorama.Fore.RED + f"{inputfile} does not exist")
+    if vector_file:
+        if not os.path.isfile(vector_file):
+            warnings.append(f"{vector_file} does not exist")
+            sys.exit(colorama.Fore.RED + f"{vector_file} does not exist")
     if inputtype == "sam":
         read_sam_file = 1
         mapreads = 0

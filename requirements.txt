@@ -1,0 +1,6 @@
+weblogo
+biopython
+colorama
+pysam
+pybedtools
+twobitreader

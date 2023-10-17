@@ -1,6 +1,6 @@
 #!/btapps/miniconda3/bin/python3
 import csv
-import PySAM
+import pysam
 import colorama
 import Bio
 import Bio.Entrez

@@ -56,8 +56,8 @@ bowtie2 genome index file (e.g. ftp://ftp.ncbi.nlm.nih.gov/genomes/archive/old_g
 ## Detailed Usage  
 ```
 usage: InSiTE.py [-h] [-q FASTQ] [-r] [-n] [-c CSV] [-a FASTA] [-s SAM]
-                 [--no_seqs] [-z] [-p PAIRS] [--no_annotate] [--barcode NNNNN]
-                 [--lwindow LWINDOW] [--rwindow RWINDOW]
+                 [--no_seqs] [-u] [-p PAIRS] [--no_annotate] [--barcode NNNNN]
+                 [--vectors VECTORS] [--lwindow LWINDOW] [--rwindow RWINDOW]
                  [--samwindow SAMWINDOW] [--remote] [--min MIN]
                  [--primer5 NNNNN] [--primer3 NNNNN] [--trim5 TRIM5]
                  [--trim3 TRIM3] [--feature intron/exon/transcript/TSS/etc]
@@ -70,7 +70,7 @@ usage: InSiTE.py [-h] [-q FASTQ] [-r] [-n] [-c CSV] [-a FASTA] [-s SAM]
                  [--twobitgenomelocation /path/to/genome.2bit]
                  [--annotations /path/to/annotation_file.bed/gff/gtf]
                  [--supress_csv] [--supress_fasta] [--supress_logo]
-                 [--append_summary]
+                 [--append_summary] [-v]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -79,14 +79,15 @@ optional arguments:
   -r, --rand_is         use random integration sites matched to given query
                         set instead of actual query set
   -n, --rand_nt         use random sequences for mapping
-  -c CSV, --csv CSV     csv input file
+  -c CSV, --csv CSV     csv input file. WARNING: This feature may not work.
   -a FASTA, --fasta FASTA
                         fasta input file
   -s SAM, --sam SAM     sam/bam input file
   --no_seqs             do not get sequences from either entrez or local
                         TwoBit genome around locations indicated by
                         genome_location_csv
-  -z, --compress_reads  compress duplicate reads and reads shifted +/- 1nt,
+  -u, --uncompress_reads
+                        compress duplicate reads and reads shifted +/- 1nt,
                         number of reads are compressed in csv, fasta, and
                         mapping outputs
   -p PAIRS, --pairs PAIRS
@@ -94,6 +95,8 @@ optional arguments:
                         (used in conjunction with '-q' or '-a')
   --no_annotate         do not map insertion sites to genome annotations
   --barcode NNNNN       barcode sequence to trim off of reads
+  --vectors VECTORS     FASTA file containing sequences te exclude from
+                        mapping, for example plasmids used in the experiment
   --lwindow LWINDOW     numebr of nucleotides upstream of integration site to
                         return
   --rwindow RWINDOW     number of nucleotides downstream of integration site
@@ -105,7 +108,7 @@ optional arguments:
   --min MIN             minimum length of a read to try mapping. default (25)
                         will usually avoid any false positives in read sets of
                         200k reads
-  --primer5 NNNNN       5' primer sequenc to remove from reads
+  --primer5 NNNNN       5' primer sequence to remove from reads
   --primer3 NNNNN       3' primer sequence to remove from reads
   --trim5 TRIM5         additional (non-genomic) nts to trim off of 3' end of
                         reads
@@ -115,7 +118,7 @@ optional arguments:
                         feature names found in feature files to map reads to,
                         e.g. "exon"
   --dist True/False     weather to map distance of each read, or only whether
-                        reads overlap with feature. same number of distance
+                        reads overlap with feature. Same number of distance
                         variables must be given as features.
   --close CLOSE         distance in bp to be considered close to feature
   --chromosome_ids /path/to/chromosomes.csv
@@ -128,6 +131,10 @@ optional arguments:
                         location of annotation file(s) (bed/gff/gtf), must be
                         same number of files as features specified
   --supress_csv         do not output csv file
+  --supress_fasta       do not ouptput fasta file
+  --supress_logo        do not output logo
+  --append_summary      add summary metrics to summary.csv file
+  -v, --verbose         verbose output and logging
   --supress_fasta       do not ouptput fasta file
   --supress_logo        do not output logo
   --append_summary      add summary metrics to summary.csv file

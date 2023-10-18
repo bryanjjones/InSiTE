@@ -139,6 +139,7 @@ if __name__ == "__main__":
     ap.add_argument('--close', action='append', type=int, help='distance in bp to be considered close to feature')
     ap.add_argument('--chromosome_ids', metavar='/path/to/chromosomes.csv',
                     default='./reference_datasets/chromosomes.csv')
+    ap.add_argument('--bbmergelocation, metavar='path/to/bbmerge', default='./bins/bbmap/bbmerge-auto.sh')
     ap.add_argument('--bowtielocation', metavar='/path/to/bowtie2', default='/btapps/miniconda3/bin/bowtie2')
     ap.add_argument('--bowtieindex', metavar='/path/to/bowtieindex',
                     default='./reference_datasets/genomes/GRCh38.fna.bowtie_index/'
@@ -212,6 +213,7 @@ if __name__ == "__main__":
     chromosome_ids = args.chromosome_ids
     bowtie_location = args.bowtielocation
     bowtie_index_file = args.bowtieindex
+    bbmerge_location = args.bbmergelocation
     weblogo_location = args.weblogolocation
     twobit_location = args.twobitlocation
     twobit_genome_location = args.twobitgenomelocation

@@ -342,9 +342,14 @@ if __name__ == "__main__":
     if inputtype == "fastq":
         print(f'FASTQ format input file: ' + colorama.Fore.YELLOW + f'{inputfile}' + colorama.Style.RESET_ALL)
         trimlog = FASTQ.Trim(inputfile, trimmedfastq, barcode, primer5, primer3, trim3, trim5, minimum_read_len)
+        print(trimlog)
         logging.debug(trimlog)
-        summary["raw reads"] = (int(sum(1 for line in open(inputfile)) / 4))  # 4 lines per entry in fastq
-        summary["trimmed reads"] = (int(sum(1 for line in open(trimmedfastq)) / 4))
+        if '.gz' in inputfile:
+          summary["raw reads"] = trimlog.split('/t')[0]
+          summary["trimmed reads"] = trimlog.split('/t')[0]
+        else:
+          summary["raw reads"] = (int(sum(1 for line in open(inputfile)) / 4))  # 4 lines per entry in fastq
+          summary["trimmed reads"] = (int(sum(1 for line in open(trimmedfastq)) / 4))
 
         if sum(1 for line in open(trimmedfastq)) == 0:
             logging.critical(f'No sequences left after trimming. Exiting')

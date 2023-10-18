@@ -4,3 +4,4 @@ colorama
 pysam
 pybedtools
 twobitreader
+cutadapt

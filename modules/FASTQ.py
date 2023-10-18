@@ -85,17 +85,17 @@ def Trim(inputfile, outputfile, barcode5, primer5='GGGTTCCGCCGGATGGC', primer3='
             if len(primer5) + len(barcode5) > 0:
                 cutcommand.append(
                     f'{cutadaptlocation} -a {barcode5}{primer5}...{primer3} -j 0 -m {minlen} --discard-untrimmed '
-                    f'--revcomp -O 17 -o {outputfile} ./{inputfile} --report minimal')
+                    f'--revcomp -O 17 -o {outputfile} {inputfile} --report minimal')
             else:
                 cutcommand.append(
                     f'{cutadaptlocation} -a {primer3} -j 0 -O 17 -m {minlen} --discard-untrimmed '
-                    f'--revcomp -o {outputfile} ./{inputfile} --report minimal')
+                    f'--revcomp -o {outputfile} {inputfile} --report minimal')
         else:
             cutcommand.append(
                 f'{cutadaptlocation} -g {barcode5}{primer5} -O 17 -j 0 -m {minlen} --discard-untrimmed '
-                f'--revcomp -o {outputfile} ./{inputfile} --report minimal')
+                f'--revcomp -o {outputfile} {inputfile} --report minimal')
     else:  # no primers, adapters, or trimming
-        cutcommand.append(f'{cutadaptlocation} -j 0 -m {minlen} -o {outputfile} ./{inputfile} --report minimal')
+        cutcommand.append(f'{cutadaptlocation} -j 0 -m {minlen} -o {outputfile} {inputfile} --report minimal')
 
     print(f'cutting adapters/primers/barcods from reads using cutadapt. Writting output to ' + colorama.Fore.YELLOW +
           f'{outputfile}')

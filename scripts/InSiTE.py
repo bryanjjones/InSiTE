@@ -176,10 +176,6 @@ if __name__ == "__main__":
         inputfile = args.sam
         inputtype = 'sam'
     if not bool(args.fasta) + bool(args.fastq) + bool(args.csv) + bool(args.sam) == 1: #+ bool(args.RC)
-        print(args.fasta)
-        print(args.fastq)
-        print(args.csv)
-        print(args.sam)
         logging.critical('please provide a single input file (fasta/fastq/sam/bam/csv)')
         sys.exit('please provide a single input file (fasta/fastq/sam/bam/csv)')
     vector_file = args.vectors

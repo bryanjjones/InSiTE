@@ -107,7 +107,7 @@ if __name__ == "__main__":
     ap.add_argument('-u', '--uncompress_reads', action='store_true', default=False,
                     help='compress duplicate reads and reads shifted +/- 1nt, number of reads are compressed in csv, '
                          'fasta, and mapping outputs')
-    ap.add_argument('-p', '--pairs', default='test02.fastq',
+    ap.add_argument('-p', '--pairs',
                     help="specify file with paired reads for paired end reads (used in conjunction with '-q' or '-a')") #TODO rever to default=None
     ap.add_argument('--no_annotate', default=False, action='store_true',
                     help='do not map insertion sites to genome annotations')

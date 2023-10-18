@@ -30,9 +30,14 @@ def QtoA(inputfile, outputfile, Ltrim=0, trim=0):
 def merge_pairs(in1, in2, out, bbmerge_location='./bins/bbmap/bbmerge-auto.sh'):
     message = []
     bbmerge_command = bbmerge_location
-    merge_out = os.path.splitext(in1)[0]+'_merge'+os.path.splitext(in1)[1]
-    unmerge_out1 = os.path.splitext(in1)[0]+'_unmerge'+os.path.splitext(in1)[1]
-    unmerge_out2 = os.path.splitext(in2)[0]+'_unmerge'+os.path.splitext(in2)[1]
+    if '.gz' in in1:
+        merge_out = in1.split('.fastq.gz')[0]+'_merge.fastq'
+        unmerge_out1 = in1.split('.fastq.gz')[0]+'_unmerge.fastq'
+        unmerge_out2 = in2.split('.fastq.gz')[0]+'_unmerge.fastq'
+    else:
+        merge_out = os.path.splitext(in1)[0]+'_merge'+os.path.splitext(in1)[1]
+        unmerge_out1 = os.path.splitext(in1)[0]+'_unmerge'+os.path.splitext(in1)[1]
+        unmerge_out2 = os.path.splitext(in2)[0]+'_unmerge'+os.path.splitext(in2)[1]
     for file in [out, merge_out, unmerge_out1, unmerge_out2]:
         if os.path.exists(file):
             os.remove(file)
@@ -43,11 +48,12 @@ def merge_pairs(in1, in2, out, bbmerge_location='./bins/bbmap/bbmerge-auto.sh'):
     print(run[1].decode())
     print(run[2].decode())
     filenames = [merge_out, unmerge_out1, unmerge_out2]
-    with open(out, 'w') as outfile:
-        for fname in filenames:
-            with open(fname) as infile:
-                for line in infile:
-                    outfile.write(line)
+    os.system('cat ' + ' '.join(filenames) + ' > ' + out)
+    #with open(out, 'w') as outfile:
+    #    for fname in filenames:
+    #        with open(fname) as infile:
+    #            for line in infile:
+    #                outfile.write(line)
     for tempfile in [merge_out, unmerge_out1, unmerge_out2]:
         os.remove(tempfile)
 

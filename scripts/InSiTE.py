@@ -344,14 +344,13 @@ if __name__ == "__main__":
         trimlog = FASTQ.Trim(inputfile, trimmedfastq, barcode, primer5, primer3, trim3, trim5, minimum_read_len)
         logging.debug(trimlog)
         if '.gz' in inputfile:
-          print(repr(trimlog))
-          summary["raw reads"] = trimlog.split('/t')[0]
-          summary["trimmed reads"] = trimlog.split('/t')[0]
+          summary["raw reads"] = int(trimlog.split('\n')[3].split('\t')[1])
+          summary["trimmed reads"] = int(trimlog.split('\n')[3].split('\t')[6])
         else:
           summary["raw reads"] = (int(sum(1 for line in open(inputfile)) / 4))  # 4 lines per entry in fastq
           summary["trimmed reads"] = (int(sum(1 for line in open(trimmedfastq)) / 4))
 
-        if sum(1 for line in open(trimmedfastq)) == 0:
+        if summary["trimmed reads"] == 0:
             logging.critical(f'No sequences left after trimming. Exiting')
             sys.exit(colorama.Fore.RED + f'No sequences left after trimming. Exiting' + colorama.Style.RESET_ALL)
         if userandomSEQS:  # replace all real reads with random NT

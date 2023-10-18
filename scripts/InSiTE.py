@@ -140,6 +140,7 @@ if __name__ == "__main__":
     ap.add_argument('--chromosome_ids', metavar='/path/to/chromosomes.csv',
                     default='./reference_datasets/chromosomes.csv')
     ap.add_argument('--bbmergelocation', metavar='path/to/bbmerge', default='./bins/bbmap/bbmerge-auto.sh')
+    ap.add_argument('--bbduklocation', metavar='path/to/bbduk', default='./bins/bbmap/bbduk.sh')
     ap.add_argument('--bowtielocation', metavar='/path/to/bowtie2', default='/btapps/miniconda3/bin/bowtie2')
     ap.add_argument('--bowtieindex', metavar='/path/to/bowtieindex',
                     default='./reference_datasets/genomes/GRCh38.fna.bowtie_index/'
@@ -214,6 +215,7 @@ if __name__ == "__main__":
     bowtie_location = args.bowtielocation
     bowtie_index_file = args.bowtieindex
     bbmerge_location = args.bbmergelocation
+    bbduk_location = args.bbduklocation
     weblogo_location = args.weblogolocation
     twobit_location = args.twobitlocation
     twobit_genome_location = args.twobitgenomelocation

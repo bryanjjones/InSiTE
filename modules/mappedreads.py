@@ -85,11 +85,11 @@ def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'com
 
     if not compressedbam:  # if not given a new file name, overwrite existing bam file
         compressedbam = bamfile
-    PySAM.sort("-o", bamfile, compressedbam)
+    pysam.sort("-o", bamfile, compressedbam)
 
     rev_reads = []
     fwd_reads = []
-    # expanded = PySAM.AlignmentFile(compressedbam, 'rb')
+    # expanded = pysam.AlignmentFile(compressedbam, 'rb')
     # for entry in expanded:
     #
     print(f'compressing duplicate reads in ' + colorama.Fore.YELLOW + f'{bamfile}' + colorama.Style.RESET_ALL
@@ -97,14 +97,14 @@ def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'com
           + colorama.Style.RESET_ALL)
     semicompressed_readslist = []
     compressed_readslist = []
-    expanded = PySAM.AlignmentFile(compressedbam, 'rb')
+    expanded = pysam.AlignmentFile(compressedbam, 'rb')
     # sort reads by orientation
     for entry in expanded:  # merge
         if entry.is_reverse:
             rev_reads.append(entry)
         else:
             fwd_reads.append(entry)
-    compressed = PySAM.AlignmentFile(compressedbam, 'wb', template=expanded)
+    compressed = pysam.AlignmentFile(compressedbam, 'wb', template=expanded)
     expanded.close()
     reads_list = fwd_reads + rev_reads
     previous = None
@@ -160,7 +160,7 @@ def compress(bamfile, compressedbam=None, adjacent=True):  # compressedbam=f'com
         for i in semicompressed_readslist:
             compressed.write(i)
         compressed.close()
-    PySAM.sort("-o", compressedbam, compressedbam)  #sort to order by position (not orientation)
+    pysam.sort("-o", compressedbam, compressedbam)  #sort to order by position (not orientation)
     # return semicompressed_readslist
 
 
@@ -168,8 +168,8 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
              abundant=None):  # sorted_file=f'{sam_file}_sorted.bam',
     # if read_sam_file:
     message = []
-    samfile = PySAM.AlignmentFile(sam_file, 'r')
-    ISbamfile = PySAM.AlignmentFile(ISbamfilename, 'wb', template=samfile)
+    samfile = pysam.AlignmentFile(sam_file, 'r')
+    ISbamfile = pysam.AlignmentFile(ISbamfilename, 'wb', template=samfile)
     print(f'Reading sam file: ' + colorama.Fore.YELLOW + f' {sam_file}' + colorama.Style.RESET_ALL)
     if randomize:
         print(colorama.Fore.MAGENTA + f'Randomizing sequence locations.' + colorama.Style.RESET_ALL)
@@ -211,13 +211,13 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
     samfile.close()
     ISbamfile.close()
     # sort those bamfile entries by entry.refrence_name and entry.pos
-    PySAM.sort("-o", ISbamfilename, ISbamfilename)
+    pysam.sort("-o", ISbamfilename, ISbamfilename)
 
     # compress bamfile
     if compressreads:
         compress(ISbamfilename)
     # convert bamfile entries to csv
-    ISbamfile = PySAM.AlignmentFile(ISbamfilename, 'rb')
+    ISbamfile = pysam.AlignmentFile(ISbamfilename, 'rb')
     abundantlist = []
     for entry in ISbamfile:
         if entry.is_reverse:
@@ -241,7 +241,7 @@ def read_sam(sam_file, chromIDS, ISbamfilename, compressreads=True, chromNTS={},
                    f'{len(unmapped)} did not map to a chromosome.')
     if abundant and compressreads:  # if abundant filename given, sort reads by most abundant,
         # and write to that file as bam file
-        abundantbamfile = PySAM.AlignmentFile(abundant, 'w', template=ISbamfile)
+        abundantbamfile = pysam.AlignmentFile(abundant, 'w', template=ISbamfile)
         abundantlist.sort(key=lambda tup: tup[0], reverse=True)
         mostover = round((100 * abundantlist[0][0] / entries), 3)
         top_clone = abundantlist[0][0]

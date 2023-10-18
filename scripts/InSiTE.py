@@ -342,9 +342,9 @@ if __name__ == "__main__":
     if inputtype == "fastq":
         print(f'FASTQ format input file: ' + colorama.Fore.YELLOW + f'{inputfile}' + colorama.Style.RESET_ALL)
         trimlog = FASTQ.Trim(inputfile, trimmedfastq, barcode, primer5, primer3, trim3, trim5, minimum_read_len)
-        print(trimlog)
         logging.debug(trimlog)
         if '.gz' in inputfile:
+          print(repr(trimlog))
           summary["raw reads"] = trimlog.split('/t')[0]
           summary["trimmed reads"] = trimlog.split('/t')[0]
         else:

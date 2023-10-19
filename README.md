@@ -1,3 +1,4 @@
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bryanjjones/InSiTE/blob/master/Site_Integration_Analysis.ipynb)
 # InSiTE
 ## Integration Site Analysis of Transposable Elements
   

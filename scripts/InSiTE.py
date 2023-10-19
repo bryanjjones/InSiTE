@@ -337,7 +337,7 @@ if __name__ == "__main__":
 
     #  if paired reads, merge what can be merged, and use the rest as individual reads. If insertion site is in a gap,
     #  it is not useful, thus gappd pairs are more useful if treated as unpaired reads.
-    if pairedfile:
+    if pairedfile and not os.path.isfile(merged_reads):
         print(f'Merging paired reads files {inputfile} and {pairedfile} using bbmerge.')
         FASTQ.merge_pairs(inputfile, pairedfile, merged_reads, bbmerge_location=bbmerge_location)
         inputfile=merged_reads

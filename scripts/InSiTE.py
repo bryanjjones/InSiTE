@@ -243,7 +243,10 @@ if __name__ == "__main__":
     trimmedfasta = f'{rootname}_trimmed.fasta'  # fasta file with adapters/primers/barcodes trimmed off with cutadapt and
     vector_free_seqs = f'{rootname}_vector_free.fasta'  #fasta file with vector sequences removed
     # short sequences removed
-    merged_reads = f'{rootname}_merged_reads{os.path.splitext(inputfile)[1]}'
+    if '.gz' in inputfile:
+      merged_reads = f'{rootname}_merged_reads.fastq'
+    else:
+      merged_reads = f'{rootname}_merged_reads{os.path.splitext(inputfile)[1]}'
     trimmedfastqpaired = f'{rootname}_trimmed_pairs.fastq'  # fastq file with adapters/primers/barcodes trimmed off with
     # cutadapt and short sequences removed
     trimmedfastapaired = f'{rootname}_trimmed_pairs.fasta'  # fastq file with adapters/primers/barcodes trimmed off with

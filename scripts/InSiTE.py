@@ -229,7 +229,10 @@ if __name__ == "__main__":
     # if args.RC:
     #     remove_collisions_list = args.RC
     # specified file names
-    rootname = os.path.splitext(inputfile)[0]
+    if '.gz' in inputfile:
+      rootname = inputfile.split('.fastq')[0]
+    else:
+      rootname = os.path.splitext(inputfile)[0]
 
     # output file names
     sam_file = f'{rootname}.sam'

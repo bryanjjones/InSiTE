@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     ap = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
                                  usage=__doc__)
-    ap.add_argument('-q', '--fastq', default='test01.fastq', help='fastq input file') #TODO default=None
+    ap.add_argument('-q', '--fastq', help='fastq input file') #TODO default=None
     ap.add_argument('-r', '--rand_is', default=False, action='store_true',
                     help='use random integration sites matched to given query set instead of actual query set')
     ap.add_argument('-n', '--rand_nt', default=False, action='store_true',
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     ap.add_argument('--no_annotate', default=False, action='store_true',
                     help='do not map insertion sites to genome annotations')
     ap.add_argument('--barcode', default='', metavar='NNNNN', help=' barcode sequence to trim off of reads')
-    ap.add_argument('--vectors', default="vector.fasta", help='FASTA file containing sequences te exclude from mapping, for '
+    ap.add_argument('--vectors', help='FASTA file containing sequences te exclude from mapping, for '
                                                     'example plasmids used in the experiment') #TODO revert to None
     ap.add_argument('--lwindow', default=50, help='numebr of nucleotides upstream of integration site to return',
                     type=int)  # window on either side of indicated nt location to return

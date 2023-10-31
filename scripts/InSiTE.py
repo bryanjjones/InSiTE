@@ -145,6 +145,7 @@ if __name__ == "__main__":
     ap.add_argument('--bowtieindex', metavar='/path/to/bowtieindex',
                     default='./reference_datasets/genomes/GRCh38.fna.bowtie_index/'
                             'GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index')
+    ap.add_argument('--bowtiethreads', default='4')
     ap.add_argument('--weblogolocation', metavar='/path/to/weblogo', default='weblogo')  # in PATH
     ap.add_argument('--twobitlocation', metavar='/path/to/TwoBitToFa', default='./scripts/TwoBitToFa')
     ap.add_argument('--twobitgenomelocation', metavar='/path/to/genome.2bit',
@@ -405,7 +406,7 @@ if __name__ == "__main__":
         #     bowtiecommand = f'{bowtie_location} --phred33 -p 4 -x {bowtie_index_file} -1 {trimmedfastq} -2 ' \
         #                     f'{trimmedfastqpaired} --fr --no-unal -S {sam_file}'
         # else:
-        bowtiecommand = f'{bowtie_location} --phred33 -p 4 -x {bowtie_index_file} -U {trimmedfastq} --no-unal ' \
+        bowtiecommand = f'{bowtie_location} --phred33 -p {args.bowtiethreads} -x {bowtie_index_file} -U {trimmedfastq} --no-unal ' \
                             f'-S {sam_file}'
     # trim priers and adapters and filter for length from fasta reads, return trimmed "genomic" sequences in fasta format.
     elif inputtype == "fasta":

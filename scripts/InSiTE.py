@@ -403,7 +403,7 @@ if __name__ == "__main__":
         # if pairedfile:
         #     print(f'using paired reads from ' + colorama.Fore.YELLOW + f'{inputfile}'+colorama.Style.RESET_ALL + ' and ' +
         #           colorama.Fore.YELLOW + f'{pairedfile}' + colorama.Style.RESET_ALL)
-        #     bowtiecommand = f'{bowtie_location} --phred33 -p 4 -x {bowtie_index_file} -1 {trimmedfastq} -2 ' \
+        #     bowtiecommand = f'{bowtie_location} --phred33 -p {args.bowtiethreads} -x {bowtie_index_file} -1 {trimmedfastq} -2 ' \
         #                     f'{trimmedfastqpaired} --fr --no-unal -S {sam_file}'
         # else:
         bowtiecommand = f'{bowtie_location} --phred33 -p {args.bowtiethreads} -x {bowtie_index_file} -U {trimmedfastq} --no-unal ' \
@@ -471,10 +471,10 @@ if __name__ == "__main__":
         # if pairedfile:
         #     print(f'using paired reads from ' + colorama.Fore.YELLOW + f'{inputfile}' + colorama.Style.RESET_ALL +
         #           ' and ' + colorama.Fore.YELLOW + f'{pairedfile}' + colorama.Style.RESET_ALL)
-        #     bowtiecommand = f'{bowtie_location} --phred33 -p 4 -x {bowtie_index_file} -1 {trimmedfasta} ' \
+        #     bowtiecommand = f'{bowtie_location} --phred33 -p {args.bowtiethreads} -x {bowtie_index_file} -1 {trimmedfasta} ' \
         #                     f'-2 {trimmedfastapaired} --no-unal -S {sam_file}'
         # else:
-        bowtiecommand = f'{bowtie_location} --phred33 -p 4 -f -x {bowtie_index_file} -U {trimmedfasta} --no-unal ' \
+        bowtiecommand = f'{bowtie_location} --phred33 -p {args.bowtiethreads} -f -x {bowtie_index_file} -U {trimmedfasta} --no-unal ' \
                             f'-S {sam_file}'
 
     # map reads from fasta file to genome, return sam file with genome locations
@@ -483,7 +483,7 @@ if __name__ == "__main__":
         if userandomSEQS:
             FASTQ.randomize(fastareads, format='fasta')
         # add bowtie mapping function to map plasmid sequences?
-        bowtiecommand = f'{bowtie_location} -f -x {bowtie_index_file} -p 4 -U {fastareads} --no-unal -S {sam_file}'
+        bowtiecommand = f'{bowtie_location} -f -x {bowtie_index_file} -p {args.bowtiethreads} -U {fastareads} --no-unal -S {sam_file}'
     if mapreads:
         print(f'mapping reads genome using bowtie2. Writing output to' + colorama.Fore.YELLOW + f' {sam_file}' +
               colorama.Style.RESET_ALL + f' and ' + colorama.Fore.YELLOW + f'{rootname}_bowtie.log' +

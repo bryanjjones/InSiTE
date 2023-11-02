@@ -27,7 +27,7 @@ def QtoA(inputfile, outputfile, Ltrim=0, trim=0):
     return seqs
 
 
-def merge_pairs(in1, in2, out, bbmerge_location='./bins/bbmap/bbmerge-auto.sh'):
+def merge_pairs(in1, in2, out, nreads, bbmerge_location='./bins/bbmap/bbmerge-auto.sh'):
     message = []
     bbmerge_command = bbmerge_location
     if '.gz' in in1:
@@ -41,7 +41,7 @@ def merge_pairs(in1, in2, out, bbmerge_location='./bins/bbmap/bbmerge-auto.sh'):
     for file in [out, merge_out, unmerge_out1, unmerge_out2]:
         if os.path.exists(file):
             os.remove(file)
-    bbmerge_command += f' in1={in1} in2={in2} out={merge_out} outu1={unmerge_out1} outu2={unmerge_out2}'
+    bbmerge_command += f' in1={in1} in2={in2} out={merge_out} outu1={unmerge_out1} outu2={unmerge_out2} reads={nreads}'
     print(f'{bbmerge_command}')
     bbmerge = runbin.Command(bbmerge_command)
     run = bbmerge.run(timeout=20000)

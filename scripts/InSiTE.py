@@ -109,6 +109,7 @@ if __name__ == "__main__":
                          'fasta, and mapping outputs')
     ap.add_argument('-p', '--pairs',
                     help="specify file with paired reads for paired end reads (used in conjunction with '-q' or '-a')") #TODO rever to default=None
+    ap.add_argument('--nreads', default=-1, type=int, help='Number of reads to analyze. (-1 is all)')
     ap.add_argument('--no_annotate', default=False, action='store_true',
                     help='do not map insertion sites to genome annotations')
     ap.add_argument('--barcode', default='', metavar='NNNNN', help=' barcode sequence to trim off of reads')
@@ -340,7 +341,7 @@ if __name__ == "__main__":
     #  it is not useful, thus gappd pairs are more useful if treated as unpaired reads.
     if pairedfile: # and not os.path.isfile(merged_reads):
         print(f'Merging paired reads files {inputfile} and {pairedfile} using bbmerge.')
-        FASTQ.merge_pairs(inputfile, pairedfile, merged_reads, bbmerge_location=bbmerge_location)
+        FASTQ.merge_pairs(inputfile, pairedfile, merged_reads, args.nreads, bbmerge_location=bbmerge_location)
         inputfile=merged_reads
 
 

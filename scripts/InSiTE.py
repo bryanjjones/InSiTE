@@ -305,9 +305,9 @@ if __name__ == "__main__":
             colorama.Fore.RED + "If getting annotations, length of annotation files, feature names, and feature distance "
                                 "must be the same")
     if verbose:
-        logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG)
+        logging.basicConfig(filename=logfile, filemode='w', level=logging.DEBUG, force=True)
     else:
-        logging.basicConfig(format='%(message)s', filename=logfile, filemode='w', level=logging.INFO)
+        logging.basicConfig(format='%(message)s', filename=logfile, filemode='w', level=logging.INFO, force=True)
     summary = {"file": rootname, "barcode sequence": barcode}
         #[rootname, barcode]
     reads = []
